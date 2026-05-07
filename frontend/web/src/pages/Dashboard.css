@@ -1,0 +1,102 @@
+.dashboard-container {
+  padding: 60px 0;
+  min-height: 100vh;
+  background: #F8FAFC;
+}
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.mood-quick-log {
+  display: flex;
+  gap: 1rem;
+  background: white;
+  padding: 0.8rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.mood-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: var(--background);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.mood-btn:hover {
+  transform: scale(1.1);
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2.5rem;
+}
+
+/* AI Promo Card */
+.ai-promo-card {
+  background: linear-gradient(135deg, #4A90E2 0%, #63B3ED 100%);
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  padding: 3rem;
+  color: white;
+  overflow: hidden;
+}
+
+.ai-promo-content {
+  max-width: 400px;
+  position: relative;
+  z-index: 2;
+}
+
+.ai-promo-icon {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+}
+
+/* Chart Placeholder */
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 1rem;
+  gap: 10px;
+}
+
+.chart-bar {
+  flex: 1;
+  background: #E2E8F0;
+  border-radius: 8px 8px 0 0;
+  transition: var(--transition);
+}
+
+.chart-bar.active {
+  background: var(--primary-blue);
+}
+
+.chart-bar:hover {
+  background: var(--sage-green);
+}
+
+/* Session Card */
+.session-card {
+  background: var(--background);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
