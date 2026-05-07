@@ -95,8 +95,34 @@ const getMe = async (req, res) => {
   }
 };
 
+// @desc    Register an anonymous user
+// @route   POST /api/auth/anonymous
+// @access  Public
+const registerAnonymous = async (req, res) => {
+  try {
+    const assignedRole = 'PATIENT';
+    
+    // Insert anonymous user
+    const newUser = await pool.query(
+      'INSERT INTO users (is_anonymous, role) VALUES ($1, $2) RETURNING id, role, is_anonymous, created_at',
+      [true, assignedRole]
+    );
+
+    const user = newUser.rows[0];
+
+    res.status(201).json({
+      ...user,
+      token: generateToken(user.id, user.role),
+    });
+  } catch (error) {
+    console.error('Error in registerAnonymous:', error);
+    res.status(500).json({ error: 'Server error during anonymous registration' });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  registerAnonymous,
 };

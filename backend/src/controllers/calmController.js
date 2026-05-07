@@ -1,80 +1,44 @@
 const pool = require('../config/db');
 
-// @desc    Get available calm/VR scenes
-// @route   GET /api/calm/scenes
+// @desc    Log a calm session
+// @route   POST /api/calm/sessions
 // @access  Private
-const getScenes = async (req, res) => {
-  // In a real app, this might come from a DB table or external service
-  const scenes = [
-    { id: 1, name: 'Ocean Beach', description: 'A relaxing sunset at the beach', type: 'VR' },
-    { id: 2, name: 'Forest Retreat', description: 'Peaceful sounds of a lush forest', type: 'AR' },
-    { id: 3, name: 'Mountain Peak', description: 'Serene view from above the clouds', type: 'VR' },
-  ];
-  
-  res.json(scenes);
-};
-
-// @desc    Start a calm session
-// @route   POST /api/calm/session/start
-// @access  Private
-const startSession = async (req, res) => {
-  const { scene_name } = req.body;
+const logCalmSession = async (req, res) => {
+  const { sceneName, durationSeconds, moodAfterScore } = req.body;
   const userId = req.user.id;
-
-  if (!scene_name) {
-    return res.status(400).json({ error: 'Scene name is required' });
-  }
 
   try {
     const result = await pool.query(
-      'INSERT INTO calm_sessions (user_id, scene_name, started_at) VALUES ($1, $2, CURRENT_TIMESTAMP) RETURNING *',
-      [userId, scene_name]
+      `INSERT INTO calm_sessions (user_id, scene_name, duration_seconds, mood_after_score) 
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [userId, sceneName, durationSeconds, moodAfterScore]
     );
-
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error starting calm session:', error);
-    res.status(500).json({ error: 'Server error starting calm session' });
+    console.error('Error logging calm session:', error);
+    res.status(500).json({ error: 'Server error logging calm session' });
   }
 };
 
-// @desc    End a calm session
-// @route   POST /api/calm/session/end
+// @desc    Get my calm history
+// @route   GET /api/calm/my
 // @access  Private
-const endSession = async (req, res) => {
-  const { session_id, duration_seconds } = req.body;
+const getMyCalmHistory = async (req, res) => {
   const userId = req.user.id;
 
-  if (!session_id || duration_seconds === undefined) {
-    return res.status(400).json({ error: 'Session ID and duration_seconds are required' });
-  }
-
   try {
-    const sessionRes = await pool.query('SELECT * FROM calm_sessions WHERE id = $1', [session_id]);
-    if (sessionRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-
-    if (sessionRes.rows[0].user_id !== userId) {
-      return res.status(403).json({ error: 'Not authorized to end this session' });
-    }
-
-    const result = await pool.query(`
-      UPDATE calm_sessions 
-      SET ended_at = CURRENT_TIMESTAMP, duration_seconds = $1 
-      WHERE id = $2 
-      RETURNING *
-    `, [duration_seconds, session_id]);
-
-    res.json(result.rows[0]);
+    const result = await pool.query(
+      'SELECT * FROM calm_sessions WHERE user_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
+    res.json(result.rows);
   } catch (error) {
-    console.error('Error ending calm session:', error);
-    res.status(500).json({ error: 'Server error ending calm session' });
+    console.error('Error fetching calm history:', error);
+    res.status(500).json({ error: 'Server error fetching calm history' });
   }
 };
 
 module.exports = {
-  getScenes,
-  startSession,
-  endSession,
+  logCalmSession,
+  getMyCalmHistory,
 };
