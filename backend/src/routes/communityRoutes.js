@@ -5,13 +5,19 @@ const {
   createPost,
   reactToPost,
   deletePost,
+  getGroups
 } = require('../controllers/communityController');
 const { protect } = require('../middlewares/authMiddleware');
 
-router.route('/posts')
+// Group Routes
+router.get('/groups', protect, getGroups);
+
+// Group-specific Post Routes
+router.route('/:groupId/posts')
   .get(protect, getPosts)
   .post(protect, createPost);
 
+// Specific Post Routes
 router.route('/posts/:id')
   .delete(protect, deletePost);
 

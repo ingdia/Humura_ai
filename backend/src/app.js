@@ -30,8 +30,11 @@ app.use('/api/psychologists', psychologistRoutes);
 const appointmentRoutes = require('./routes/appointmentRoutes');
 app.use('/api/appointments', appointmentRoutes);
 
-const aiChatRoutes = require('./routes/aiChatRoutes');
-app.use('/api/ai-chat', aiChatRoutes);
+const questionRoutes = require('./routes/questionRoutes');
+app.use('/api/questions', questionRoutes);
+
+const resourceRoutes = require('./routes/resourceRoutes');
+app.use('/api/resources', resourceRoutes);
 
 const moodRoutes = require('./routes/moodRoutes');
 app.use('/api/mood', moodRoutes);
