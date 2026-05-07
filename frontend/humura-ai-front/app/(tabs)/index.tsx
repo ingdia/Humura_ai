@@ -1,623 +1,236 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  Dimensions,
-  ImageBackground,
+  View, Text, StyleSheet, SafeAreaView, ScrollView,
+  TouchableOpacity, StatusBar, Dimensions, ImageBackground,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-// Refined Color Palette: White, Gray, and #4a90e2 Blue
-const COLORS = {
-  primary: '#4a90e2', // New Blue
-  primaryDark: '#357ABD', // Darker blue
-  primaryDarker: '#2C5F8F', // Even darker
-  primaryLight: '#7BB3E8', // Lighter blue
-  primaryLighter: '#A4C8F0', // Very light blue
-  accent: '#E8F0FF', // Light blue accent
-  bg: '#F0F0F0', // Gray background
-  white: '#FFFFFF',
-  textDark: '#333333', // Dark Gray
-  textMedium: '#666666', // Medium Gray
-  textLight: '#999999', // Light Gray
-  overlay: 'rgba(74, 144, 226, 0.75)', // Blue overlay
-  overlayLight: 'rgba(74, 144, 226, 0.6)',
-  overlayDark: 'rgba(51, 51, 51, 0.8)', // Dark gray overlay
+const C = {
+  primary:  '#4a90e2',
+  mid:      '#357ABD',
+  light:    '#7BB3E8',
+  accent:   '#2C5F8F',
+  sky:      '#EBF4FF',
+  bg:       '#F0F7FF',
+  card:     '#FFFFFF',
+  text:     '#0D1B2A',
+  textSoft: '#78909C',
 };
 
+const QUOTES = [
+  'Healing takes time, and asking for help is a courageous step.',
+  'You are not alone. Millions walk this path with you.',
+  "There is hope, even when your brain tells you there isn't.",
+  'Umuntu ngumuntu ngabantu — a person is a person through other people.',
+  'The wound is the place where the light enters you.',
+  'Speak your truth even if your voice shakes.',
+  'Mental health is not a destination, but a process.',
+];
+
+const FEATURES = [
+  { tab: '/(tabs)/chat', icon: 'chatbubbles', title: 'AI Companion',  desc: 'Talk freely, 24/7.',    colors: ['#4a90e2', '#2C5F8F'] as [string, string], badge: '● Live' },
+  { tab: '/(tabs)/mood', icon: 'analytics',   title: 'Mood Tracker',  desc: 'Track your patterns.',  colors: ['#357ABD', '#4a90e2'] as [string, string], badge: '5🔥' },
+  { tab: '/(tabs)/calm', icon: 'leaf',        title: 'Calm Mode',     desc: 'Breathe & find peace.', colors: ['#5BA3E8', '#357ABD'] as [string, string], badge: 'NEW' },
+  { tab: '/(tabs)/feed', icon: 'people',      title: 'Community',     desc: 'You are not alone.',    colors: ['#7BB3E8', '#4a90e2'] as [string, string], badge: '47 today' },
+];
+
+const MOODS = [
+  { emoji: '😄', label: 'Great', color: '#4CAF50' },
+  { emoji: '😊', label: 'Good',  color: '#42A5F5' },
+  { emoji: '😐', label: 'Okay',  color: '#FFC107' },
+  { emoji: '😢', label: 'Sad',   color: '#EF5350' },
+  { emoji: '😡', label: 'Angry', color: '#E53935' },
+];
+
 export default function HomeScreen() {
+  const router = useRouter();
+  const [mood, setMood] = useState<string | null>(null);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const quote = QUOTES[new Date().getDay() % QUOTES.length];
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.bg} />
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Hero Section - Balanced Image + Purple */}
-        <View style={styles.heroContainer}>
-          <ImageBackground
-            source={{ uri: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800&q=80' }}
-            style={styles.heroBg}
-            imageStyle={styles.heroBgImage}
+      <StatusBar barStyle="light-content" backgroundColor={C.primary} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* HERO */}
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=900&q=80' }}
+          style={styles.hero}
+          resizeMode="cover"
+        >
+          <LinearGradient
+            colors={['rgba(74,144,226,0.92)', 'rgba(44,95,143,0.90)']}
+            style={styles.heroOverlay}
           >
-            <LinearGradient
-              colors={['rgba(74, 144, 226, 0.85)', 'rgba(53, 122, 189, 0.8)', 'rgba(44, 95, 143, 0.85)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroOverlay}
-            >
-              <View style={styles.heroContent}>
-                <View style={styles.logoContainer}>
-                  <View style={styles.logoIcon}>
-                    <Ionicons name="leaf" size={24} color="#fff" />
-                  </View>
-                  <Text style={styles.brandName}>Humura</Text>
+            <View style={styles.heroTop}>
+              <View style={styles.logoRow}>
+                <View style={styles.logoIcon}>
+                  <Ionicons name="leaf" size={16} color="#fff" />
                 </View>
-                <Text style={styles.heroTitle}>
-                  Your mental health{'\n'}journey starts here
-                </Text>
-                <Text style={styles.heroSubtitle}>
-                  AI support • Professional care • Immersive calm
-                </Text>
-                <TouchableOpacity style={styles.getStartedBtn}>
-                  <Text style={styles.getStartedText}>Begin Journey</Text>
-                  <Ionicons name="arrow-forward" size={18} color={COLORS.primaryDark} />
-                </TouchableOpacity>
+                <Text style={styles.logoText}>Humura</Text>
               </View>
-            </LinearGradient>
-          </ImageBackground>
-        </View>
+              <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(tabs)/profile')}>
+                <Ionicons name="person" size={17} color={C.primary} />
+              </TouchableOpacity>
+            </View>
 
-        {/* Features Section */}
-        <View style={styles.featuresSection}>
-          <Text style={styles.sectionTitle}>Discover Your Path</Text>
-          
-          {/* AI Chat - Hero Card */}
-          <TouchableOpacity style={styles.cardLarge} activeOpacity={0.92}>
-            <ImageBackground
-              source={{ uri: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?w=800&q=80' }}
-              style={styles.cardBg}
-              imageStyle={styles.cardBgImage}
-            >
-              <LinearGradient
-                colors={['rgba(74, 144, 226, 0.7)', 'rgba(53, 122, 189, 0.75)']}
-                start={{ x: 0, y: 0.4 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.cardOverlay}
-              >
-                <View style={styles.cardTopContent}>
-                  <View style={styles.cardIconWrapper}>
-                    <Ionicons name="chatbubbles" size={32} color="#fff" />
-                  </View>
-                  <View style={styles.availabilityBadge}>
-                    <View style={styles.liveDot} />
-                    <Text style={styles.availabilityText}>Always here</Text>
-                  </View>
-                </View>
-                <View style={styles.cardBottomContent}>
-                  <Text style={styles.cardTitleLarge}>AI Companion</Text>
-                  <Text style={styles.cardDescLarge}>
-                    Talk freely anytime. Compassionate support that understands you.
-                  </Text>
-                </View>
-              </LinearGradient>
-            </ImageBackground>
-          </TouchableOpacity>
+            <Text style={styles.heroGreeting}>{greeting} 🌿</Text>
+            <Text style={styles.heroTitle}>How are you feeling?</Text>
 
-          {/* Grid Cards */}
-          <View style={styles.gridRow}>
-            {/* Doctor Consult */}
-            <TouchableOpacity style={[styles.cardSmall, styles.cardTall]} activeOpacity={0.92}>
-              <ImageBackground
-                source={{ uri: 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?w=400&q=80' }}
-                style={styles.cardBgSmall}
-                imageStyle={styles.cardBgImageSmall}
-              >
-                <LinearGradient
-                  colors={['transparent', 'rgba(74, 144, 226, 0.85)']}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 0, y: 1 }}
-                  style={styles.cardOverlaySmall}
-                >
-                  <View style={styles.smallCardIcon}>
-                    <Ionicons name="medical" size={24} color="#fff" />
-                  </View>
-                  <Text style={styles.cardTitleSmall}>Doctor Consult</Text>
-                  <Text style={styles.cardTextSmall}>Licensed therapists</Text>
-                </LinearGradient>
-              </ImageBackground>
+            <TouchableOpacity style={styles.heroBtn} onPress={() => router.push('/(tabs)/chat')}>
+              <Ionicons name="chatbubbles" size={17} color={C.primary} />
+              <Text style={styles.heroBtnText}>Talk to Humura AI</Text>
             </TouchableOpacity>
 
-            {/* VR Calm */}
-            <TouchableOpacity style={[styles.cardSmall, styles.cardMedium]} activeOpacity={0.92}>
-              <ImageBackground
-                source={{ uri: 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=400&q=80' }}
-                style={styles.cardBgSmall}
-                imageStyle={styles.cardBgImageSmall}
-              >
-                <LinearGradient
-                  colors={['rgba(176, 224, 230, 0.6)', 'rgba(74, 144, 226, 0.8)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.cardOverlaySmall}
+            <View style={styles.moodRow}>
+              {MOODS.map(m => (
+                <TouchableOpacity
+                  key={m.label}
+                  style={[styles.moodBtn, mood === m.label && { borderColor: m.color, backgroundColor: m.color + '35' }]}
+                  onPress={() => setMood(m.label)}
                 >
-                  <View style={styles.smallCardIcon}>
-                    <Ionicons name="eye" size={24} color="#fff" />
-                  </View>
-                  <Text style={styles.cardTitleSmall}>VR Calm Mode</Text>
-                  <Text style={styles.cardTextSmall}>Immersive peace</Text>
-                  <View style={styles.newBadge}>
-                    <Text style={styles.newBadgeText}>NEW</Text>
-                  </View>
-                </LinearGradient>
-              </ImageBackground>
-            </TouchableOpacity>
-          </View>
+                  <Text style={styles.moodEmoji}>{m.emoji}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {mood && <Text style={styles.moodSaved}>Feeling {mood} today ✓</Text>}
+          </LinearGradient>
+        </ImageBackground>
 
-          {/* Mood Tracking - Wide Card */}
-          <TouchableOpacity style={styles.cardWide} activeOpacity={0.92}>
-            <ImageBackground
-              source={{ uri: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80' }}
-              style={styles.cardBgWide}
-              imageStyle={styles.cardBgImageWide}
-            >
-              <LinearGradient
-                colors={['rgba(74, 144, 226, 0.65)', 'rgba(53, 122, 189, 0.7)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardOverlayWide}
-              >
-                <View style={styles.wideCardLeft}>
-                  <View style={styles.smallCardIcon}>
-                    <Ionicons name="analytics" size={26} color="#fff" />
-                  </View>
-                  <View>
-                    <Text style={styles.cardTitleWide}>Mood Tracking</Text>
-                    <Text style={styles.cardTextWide}>Understand your patterns</Text>
-                  </View>
-                </View>
-                <View style={styles.moodIndicators}>
-                  {[0.4, 0.6, 0.8, 1].map((opacity, i) => (
-                    <View 
-                      key={i} 
-                      style={[
-                        styles.moodDot, 
-                        { opacity, backgroundColor: `rgba(255,255,255,${opacity})` }
-                      ]} 
-                    />
-                  ))}
-                </View>
-              </LinearGradient>
-            </ImageBackground>
-          </TouchableOpacity>
-
-          {/* Quick Actions */}
-          <Text style={styles.sectionSubtitle}>Quick Wellness</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickScroll}
-          >
-            <QuickCard 
-              icon="musical-notes"
-              title="Breathe"
-              image="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=300&q=80"
-            />
-            <QuickCard 
-              icon="moon"
-              title="Sleep"
-              image="https://images.unsplash.com/photo-1511295742349-848f3e02f78a?w=300&q=80"
-            />
-            <QuickCard 
-              icon="flame"
-              title="Release"
-              image="https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=300&q=80"
-            />
-            <QuickCard 
-              icon="heart"
-              title="Care"
-              image="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&q=80"
-            />
-          </ScrollView>
-        </View>
-
-        {/* Inspiration Card */}
-        <TouchableOpacity style={styles.inspirationCard} activeOpacity={0.9}>
-          <ImageBackground
-            source={{ uri: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&q=80' }}
-            style={styles.inspirationBg}
-            imageStyle={styles.inspirationImage}
-          >
-            <LinearGradient
-              colors={['rgba(74, 144, 226, 0.75)', 'rgba(51, 51, 51, 0.8)']}
-              style={styles.inspirationOverlay}
-            >
-              <Ionicons name="chatbubble" size={36} color="rgba(255,255,255,0.9)" style={styles.quoteIcon} />
-              <Text style={styles.quoteText}>
-                "Healing is a journey, not a destination"
-              </Text>
-              <Text style={styles.quoteAuthor}>Daily Inspiration</Text>
-            </LinearGradient>
-          </ImageBackground>
+        {/* Crisis strip */}
+        <TouchableOpacity style={styles.crisisBar} onPress={() => router.push('/(tabs)/chat')}>
+          <Ionicons name="heart" size={14} color="#fff" />
+          <Text style={styles.crisisText}>Overwhelmed? Talk to Humura AI now</Text>
+          <Ionicons name="chevron-forward" size={14} color="#fff" />
         </TouchableOpacity>
 
-        <View style={{ height: 30 }} />
+        {/* Feature 2x2 grid */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Wellness Tools</Text>
+          <View style={styles.grid}>
+            {FEATURES.map((f, i) => (
+              <TouchableOpacity key={i} style={styles.featureCard} activeOpacity={0.87} onPress={() => router.push(f.tab as any)}>
+                <LinearGradient colors={f.colors} style={styles.featureGrad}>
+                  <View style={styles.featureTop}>
+                    <View style={styles.featureIcon}>
+                      <Ionicons name={f.icon as any} size={20} color="#fff" />
+                    </View>
+                    <Text style={styles.featureBadge}>{f.badge}</Text>
+                  </View>
+                  <Text style={styles.featureTitle}>{f.title}</Text>
+                  <Text style={styles.featureDesc}>{f.desc}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          {[
+            { label: 'Streak',    value: '5🔥', color: '#FFC107' },
+            { label: 'Mood Logs', value: '11',  color: C.primary },
+            { label: 'Calm',      value: '6',   color: '#27AE60' },
+            { label: 'Posts',     value: '3❤️', color: C.mid },
+          ].map((s, i) => (
+            <View key={i} style={styles.statCard}>
+              <Text style={[styles.statVal, { color: s.color }]}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Quote + Consult */}
+        <View style={styles.bottomRow}>
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=600&q=80' }}
+            style={styles.quoteCard}
+            imageStyle={{ borderRadius: 18 }}
+            resizeMode="cover"
+          >
+            <LinearGradient colors={['rgba(74,144,226,0.88)', 'rgba(44,95,143,0.92)']} style={styles.quoteOverlay}>
+              <Ionicons name="chatbubble-ellipses" size={18} color="rgba(255,255,255,0.6)" style={{ marginBottom: 8 }} />
+              <Text style={styles.quoteText}>"{quote}"</Text>
+            </LinearGradient>
+          </ImageBackground>
+
+          <TouchableOpacity style={styles.consultCard} activeOpacity={0.9} onPress={() => router.push('/(tabs)/profile')}>
+            <ImageBackground
+              source={{ uri: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&q=80' }}
+              style={{ flex: 1 }}
+              imageStyle={{ borderRadius: 18 }}
+              resizeMode="cover"
+            >
+              <LinearGradient colors={['rgba(74,144,226,0.88)', 'rgba(44,95,143,0.92)']} style={styles.consultOverlay}>
+                <View style={styles.consultIcon}>
+                  <Ionicons name="medical" size={20} color="#fff" />
+                </View>
+                <Text style={styles.consultTitle}>{'Book a\nTherapist'}</Text>
+                <Text style={styles.consultSub}>Subsidized →</Text>
+              </LinearGradient>
+            </ImageBackground>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// Quick Card Component
-interface QuickCardProps {
-  icon: string;
-  title: string;
-  image: string;
-}
-
-function QuickCard({ icon, title, image }: QuickCardProps) {
-  return (
-    <TouchableOpacity style={styles.quickCard}>
-      <ImageBackground
-        source={{ uri: image }}
-        style={styles.quickCardBg}
-        imageStyle={styles.quickCardImage}
-      >
-        <LinearGradient
-          colors={['rgba(74, 144, 226, 0.7)', 'rgba(53, 122, 189, 0.75)']}
-          style={styles.quickCardOverlay}
-        >
-          <Ionicons name={icon as any} size={26} color="#fff" />
-          <Text style={styles.quickCardTitle}>{title}</Text>
-        </LinearGradient>
-      </ImageBackground>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  scrollContent: { paddingBottom: 20 },
-  
-  // Hero
-  heroContainer: {
-    height: 420,
-    overflow: 'hidden',
-  },
-  heroBg: { flex: 1 },
-  heroBgImage: { borderRadius: 0 },
-  heroOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  heroContent: { paddingTop: 40 },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  brandName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  heroTitle: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 44,
-    marginBottom: 12,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.92)',
-    marginBottom: 32,
-    fontWeight: '500',
-  },
-  getStartedBtn: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingVertical: 15,
-    paddingHorizontal: 28,
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  getStartedText: {
-    color: COLORS.primaryDark,
-    fontSize: 16,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  
-  // Features
-  featuresSection: { paddingHorizontal: 16, marginTop: -30 },
-  sectionTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.textDark,
-    marginBottom: 20,
-    paddingHorizontal: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textMedium,
-    marginTop: 28,
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  
-  // Large Card
-  cardLarge: {
-    borderRadius: 24,
-    height: 340,
-    marginBottom: 16,
-    overflow: 'hidden',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-    backgroundColor: '#FFFFFF', // White
-  },
-  cardBg: { flex: 1 },
-  cardBgImage: { borderRadius: 24 },
-  cardOverlay: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'space-between',
-    borderRadius: 24,
-  },
-  cardTopContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardIconWrapper: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  availabilityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4ADE80',
-    marginRight: 6,
-  },
-  availabilityText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBottomContent: {},
-  cardTitleLarge: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  cardDescLarge: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.95)',
-    lineHeight: 22,
-    maxWidth: '90%',
-  },
-  
-  // Grid
-  gridRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  cardSmall: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-    backgroundColor: '#FFFFFF', // White
-  },
-  cardTall: {
-    width: (width - 44) / 2,
-    height: 250,
-  },
-  cardMedium: {
-    width: (width - 44) / 2,
-    height: 190,
-  },
-  cardBgSmall: { flex: 1 },
-  cardBgImageSmall: { borderRadius: 20 },
-  cardOverlaySmall: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'flex-end',
-    borderRadius: 20,
-  },
-  smallCardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitleSmall: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  cardTextSmall: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.92)',
-  },
-  newBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-  },
-  newBadgeText: {
-    color: COLORS.primaryDark,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  
-  // Wide Card
-  cardWide: {
-    borderRadius: 20,
-    height: 150,
-    overflow: 'hidden',
-    marginBottom: 12,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-    backgroundColor: '#FFFFFF', // White
-  },
-  cardBgWide: { flex: 1 },
-  cardBgImageWide: { borderRadius: 20 },
-  cardOverlayWide: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderRadius: 20,
-  },
-  wideCardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  cardTitleWide: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  cardTextWide: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.92)',
-  },
-  moodIndicators: {
-    flexDirection: 'row',
-    gap: 8,
-    alignItems: 'center',
-  },
-  moodDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  
-  // Quick Scroll
-  quickScroll: { paddingHorizontal: 4 },
-  quickCard: {
-    width: 110,
-    height: 130,
-    marginRight: 12,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF', // White
-  },
-  quickCardBg: { flex: 1 },
-  quickCardImage: { borderRadius: 20 },
-  quickCardOverlay: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  quickCardTitle: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  
-  // Inspiration
-  inspirationCard: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 24,
-    overflow: 'hidden',
-    height: 200,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-    backgroundColor: '#FFFFFF', // White
-  },
-  inspirationBg: { flex: 1 },
-  inspirationImage: { borderRadius: 24 },
-  inspirationOverlay: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 24,
-  },
-  quoteIcon: { marginBottom: 14 },
-  quoteText: {
-    fontSize: 19,
-    fontWeight: '600',
-    color: '#fff',
-    textAlign: 'center',
-    lineHeight: 27,
-    marginBottom: 10,
-    paddingHorizontal: 8,
-  },
-  quoteAuthor: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
+  container: { flex: 1, backgroundColor: C.bg },
+  scroll: { paddingBottom: 16 },
+
+  hero: { width: '100%' },
+  heroOverlay: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 22 },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  logoRow: { flexDirection: 'row', alignItems: 'center' },
+  logoIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  logoText: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  profileBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  heroGreeting: { fontSize: 13, color: 'rgba(255,255,255,0.82)', fontWeight: '500', marginBottom: 4 },
+  heroTitle: { fontSize: 28, fontWeight: '900', color: '#fff', marginBottom: 16 },
+  heroBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', alignSelf: 'flex-start', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 28, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4 },
+  heroBtnText: { color: C.primary, fontSize: 14, fontWeight: '700', marginLeft: 7 },
+  moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  moodBtn: { width: (width - 60) / 5, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)', backgroundColor: 'rgba(255,255,255,0.1)' },
+  moodEmoji: { fontSize: 22 },
+  moodSaved: { color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: '600', marginTop: 10, textAlign: 'center' },
+
+  crisisBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2C5F8F', paddingHorizontal: 16, paddingVertical: 10 },
+  crisisText: { flex: 1, color: '#fff', fontSize: 13, fontWeight: '600', marginHorizontal: 10 },
+
+  section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: C.text, marginBottom: 12 },
+
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  featureCard: { width: (width - 42) / 2, borderRadius: 18, overflow: 'hidden', shadowColor: '#4a90e2', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.18, shadowRadius: 10, elevation: 5 },
+  featureGrad: { padding: 16, height: 130, justifyContent: 'space-between' },
+  featureTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featureIcon: { width: 38, height: 38, borderRadius: 11, backgroundColor: 'rgba(255,255,255,0.22)', justifyContent: 'center', alignItems: 'center' },
+  featureBadge: { color: '#fff', fontSize: 10, fontWeight: '700', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
+  featureTitle: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  featureDesc: { fontSize: 11, color: 'rgba(255,255,255,0.85)' },
+
+  statsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginTop: 16 },
+  statCard: { flex: 1, backgroundColor: C.card, borderRadius: 14, padding: 12, alignItems: 'center', shadowColor: '#4a90e2', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
+  statVal: { fontSize: 18, fontWeight: '800' },
+  statLabel: { fontSize: 9, color: C.textSoft, marginTop: 3, textAlign: 'center', fontWeight: '500' },
+
+  bottomRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, gap: 10 },
+  quoteCard: { flex: 1.4, height: 140, borderRadius: 18, overflow: 'hidden' },
+  quoteOverlay: { flex: 1, padding: 16, justifyContent: 'center', borderRadius: 18 },
+  quoteText: { fontSize: 12, fontWeight: '600', color: '#fff', lineHeight: 18 },
+  consultCard: { flex: 1, height: 140, borderRadius: 18, overflow: 'hidden' },
+  consultOverlay: { flex: 1, padding: 14, justifyContent: 'space-between', borderRadius: 18 },
+  consultIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.22)', justifyContent: 'center', alignItems: 'center' },
+  consultTitle: { fontSize: 14, fontWeight: '800', color: '#fff', lineHeight: 19 },
+  consultSub: { fontSize: 11, color: 'rgba(255,255,255,0.82)', fontWeight: '600' },
 });
