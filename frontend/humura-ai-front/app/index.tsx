@@ -6,11 +6,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../src/contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Core animations
   const screenOpacity  = useRef(new Animated.Value(1)).current;
@@ -54,26 +56,7 @@ export default function SplashScreen() {
   const p4O = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Floating particles loop
-    const floatParticle = (y: Animated.Value, o: Animated.Value, delay: number) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.parallel([
-            Animated.timing(o, { toValue: 0.7, duration: 600, useNativeDriver: true }),
-            Animated.timing(y, { toValue: -30, duration: 2000, useNativeDriver: true }),
-          ]),
-          Animated.parallel([
-            Animated.timing(o, { toValue: 0, duration: 600, useNativeDriver: true }),
-            Animated.timing(y, { toValue: 0, duration: 0, useNativeDriver: true }),
-          ]),
-        ])
-      ).start();
-    };
-    floatParticle(p1Y, p1O, 0);
-    floatParticle(p2Y, p2O, 400);
-    floatParticle(p3Y, p3O, 800);
-    floatParticle(p4Y, p4O, 1200);
+    if (isLoading) return; // Wait for auth check to complete
 
     // Main sequence
     Animated.sequence([
@@ -118,8 +101,14 @@ export default function SplashScreen() {
       Animated.delay(200),
       // Fade out
       Animated.timing(screenOpacity, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start(() => router.replace('/(tabs)'));
-  }, []);
+    ]).start(() => {
+      if (isAuthenticated) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(auth)/login');
+      }
+    });
+  }, [isLoading, isAuthenticated]);
 
   const spin = logoRotate.interpolate({ inputRange: [-0.1, 0], outputRange: ['-15deg', '0deg'] });
 

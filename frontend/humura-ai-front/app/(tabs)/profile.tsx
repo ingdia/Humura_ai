@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 const C = {
   primary:  '#4a90e2',
@@ -89,6 +90,7 @@ const STATS = [
 ];
 
 export default function ProfileScreen() {
+  const { user, logout } = useAuth();
   const [notifications, setNotifications]   = useState(true);
   const [anonymous, setAnonymous]           = useState(true);
   const [dailyReminder, setDailyReminder]   = useState(true);
@@ -116,6 +118,17 @@ export default function ProfileScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Book & Open Meet', onPress: () => openMeet(therapist, slot.time) },
+      ]
+    );
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Logout', style: 'destructive', onPress: logout },
       ]
     );
   };
@@ -176,7 +189,7 @@ export default function ProfileScreen() {
           <View style={styles.avatar}>
             <Ionicons name="person" size={36} color="#fff" />
           </View>
-          <Text style={styles.username}>Anonymous User</Text>
+          <Text style={styles.username}>{user?.name || 'Anonymous User'}</Text>
           <Text style={styles.userSub}>Your journey is private & safe 🌿</Text>
         </LinearGradient>
 
@@ -287,6 +300,7 @@ export default function ProfileScreen() {
             { label: 'Help & FAQ',           icon: 'help-circle',        onPress: () => {} },
             { label: 'About Humura',         icon: 'information-circle', onPress: () => {} },
             { label: 'Crisis Helpline: 116', icon: 'call',               onPress: () => Linking.openURL('tel:116'), color: '#EF5350' },
+            { label: 'Logout',               icon: 'log-out-outline',    onPress: handleLogout, color: '#EF5350' },
           ].map((o, i) => (
             <TouchableOpacity key={i} style={styles.optionRow} onPress={o.onPress}>
               <View style={styles.settingIcon}>
