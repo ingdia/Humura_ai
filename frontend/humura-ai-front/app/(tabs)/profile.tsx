@@ -2,203 +2,272 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, SafeAreaView, StatusBar, Switch,
-  Linking, Alert, Modal,
+  Linking, Alert, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../src/contexts/AuthContext';
-
-const C = {
-  primary:  '#4a90e2',
-  mid:      '#357ABD',
-  light:    '#7BB3E8',
-  accent:   '#2C5F8F',
-  sky:      '#EBF4FF',
-  bg:       '#F0F7FF',
-  card:     '#FFFFFF',
-  text:     '#0D1B2A',
-  textMid:  '#37474F',
-  textSoft: '#78909C',
-};
+import { Colors, Shadows } from '../../src/constants/theme';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 type Slot = { time: string; available: boolean };
 
-type Therapist = {
+type Specialist = {
   id: string;
   name: string;
-  specialty: string;
-  rating: number;
-  sessions: number;
-  price: string;
-  meetLink: string;
-  slots: Slot[];
+  role: 'psychologist' | 'social_worker' | 'peer_support';
+  roleLabel: string;
+  roleLabelK: string;
+  icon: string;
+  color: string;
+  phone: string;
+  slots?: Slot[];
 };
 
-const THERAPISTS: Therapist[] = [
+const SPECIALISTS: Specialist[] = [
   {
     id: '1',
     name: 'Dr. Amina Uwase',
-    specialty: 'Anxiety & Depression',
-    rating: 4.9,
-    sessions: 120,
-    price: 'Free (subsidized)',
-    meetLink: 'https://meet.google.com/abc-defg-hij',
+    role: 'psychologist',
+    roleLabel: 'Psychologist',
+    roleLabelK: 'Umusinganyandwara',
+    icon: 'heart',
+    color: '#4a90e2',
+    phone: '+250 788 123 456',
     slots: [
       { time: 'Today  9:00 AM',  available: true  },
-      { time: 'Today  11:00 AM', available: false },
       { time: 'Today  2:00 PM',  available: true  },
-      { time: 'Tomorrow 10:00 AM', available: true },
     ],
   },
   {
     id: '2',
-    name: 'Dr. Jean Habimana',
-    specialty: 'Trauma & PTSD',
-    rating: 4.8,
-    sessions: 95,
-    price: '2,000 RWF',
-    meetLink: 'https://meet.google.com/klm-nopq-rst',
-    slots: [
-      { time: 'Today  10:00 AM', available: false },
-      { time: 'Today  3:00 PM',  available: true  },
-      { time: 'Tomorrow 9:00 AM', available: true  },
-      { time: 'Tomorrow 1:00 PM', available: false },
-    ],
+    name: 'Nurse Grace Nkusi',
+    role: 'social_worker',
+    roleLabel: 'Social Worker',
+    roleLabelK: 'Umukozi mbonezamubano',
+    icon: 'medical',
+    color: '#27AE60',
+    phone: '+250 788 654 321',
   },
   {
     id: '3',
-    name: 'Dr. Grace Mutoni',
-    specialty: 'Family & Relationships',
-    rating: 4.7,
-    sessions: 78,
-    price: '1,500 RWF',
-    meetLink: 'https://meet.google.com/uvw-xyz1-234',
+    name: 'Brother Keza',
+    role: 'peer_support',
+    roleLabel: 'Peer Support',
+    roleLabelK: 'Ubufasha bwa bagenzi bawe',
+    icon: 'people',
+    color: '#8E44AD',
+    phone: '+250 788 999 888',
     slots: [
-      { time: 'Today  4:00 PM',    available: false },
-      { time: 'Tomorrow 11:00 AM', available: true  },
+      { time: 'Tomorrow 10:00 AM', available: true },
       { time: 'Tomorrow 3:00 PM',  available: true  },
-      { time: 'Thu  9:00 AM',      available: true  },
     ],
   },
-];
-
-const STATS = [
-  { label: 'Days Active',   value: '14',  icon: 'calendar',  color: '#4CAF50' },
-  { label: 'Mood Logs',     value: '11',  icon: 'analytics', color: C.mid },
-  { label: 'Calm Sessions', value: '6',   icon: 'leaf',      color: '#0288D1' },
-  { label: 'Streak',        value: '5🔥', icon: 'flame',     color: '#FFC107' },
 ];
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const [notifications, setNotifications]   = useState(true);
   const [anonymous, setAnonymous]           = useState(true);
-  const [dailyReminder, setDailyReminder]   = useState(true);
-  const [selectedTherapist, setSelectedTherapist] = useState<Therapist | null>(null);
-  const [bookedSlot, setBookedSlot]         = useState<{ therapistId: string; slot: string } | null>(null);
+  
+  const [selectedSpec, setSelectedSpec] = useState<Specialist | null>(null);
+  const [messagingSpec, setMessagingSpec] = useState<Specialist | null>(null);
+  const [messageText, setMessageText] = useState('');
+  
+  const [phone, setPhone] = useState(user?.phone || '+250 788 000 000');
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [name, setName] = useState(user?.name || (language === 'en' ? 'Anonymous User' : 'Uwakoresha Utazwi'));
+  const [isEditingName, setIsEditingName] = useState(false);
 
-  const openMeet = async (therapist: Therapist, slot: string) => {
-    setSelectedTherapist(null);
-    setBookedSlot({ therapistId: therapist.id, slot });
+  const STATS = [
+    { label: language === 'en' ? 'Days Active' : 'Iminsi',   value: '14',  icon: 'calendar',  color: '#4CAF50' },
+    { label: t('mood_title'),     value: '11',  icon: 'analytics', color: Colors.primary },
+    { label: t('calm_title'), value: '6',   icon: 'leaf',      color: '#27AE60' },
+  ];
 
-    const canOpen = await Linking.canOpenURL(therapist.meetLink);
-    if (canOpen) {
-      await Linking.openURL(therapist.meetLink);
-    } else {
-      // Fallback: open Google Meet in browser
-      await Linking.openURL(`https://meet.google.com`);
+  const handleAction = (type: 'message' | 'call' | 'book', spec: Specialist) => {
+    if (type === 'call') {
+      Linking.openURL(`tel:${spec.phone.replace(/\s/g, '')}`);
+    } else if (type === 'message') {
+      setMessagingSpec(spec);
+    } else if (type === 'book') {
+      setSelectedSpec(spec);
     }
   };
 
-  const confirmBook = (therapist: Therapist, slot: Slot) => {
-    if (!slot.available) return;
+  const sendMessage = () => {
+    if (!messageText.trim()) return;
     Alert.alert(
-      'Confirm Booking',
-      `Book ${slot.time} with ${therapist.name}?\n\nA Google Meet link will open for your session.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Book & Open Meet', onPress: () => openMeet(therapist, slot.time) },
-      ]
+      language === 'en' ? 'Message Sent' : 'Ubutumwa bwoherejwe',
+      language === 'en' ? `Your message has been sent to ${messagingSpec?.name}. They will respond shortly.` : `Ubutumwa bwawe bwoherejwe kuri ${messagingSpec?.name}. Azagusubiza vuba.`
     );
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: logout },
-      ]
-    );
+    setMessageText('');
+    setMessagingSpec(null);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={C.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
-      {/* Slot Picker Modal */}
-      <Modal visible={!!selectedTherapist} transparent animationType="slide">
+      {/* Booking Modal */}
+      <Modal visible={!!selectedSpec} transparent animationType="slide">
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedTherapist?.name}</Text>
-              <TouchableOpacity onPress={() => setSelectedTherapist(null)}>
-                <Ionicons name="close" size={22} color={C.textMid} />
+              <Text style={styles.modalTitle}>{selectedSpec?.name}</Text>
+              <TouchableOpacity onPress={() => setSelectedSpec(null)}>
+                <Ionicons name="close" size={24} color={Colors.text} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalSub}>Select an available time slot</Text>
+            <Text style={styles.modalSub}>{language === 'en' ? 'Select an appointment time' : 'Hitamo igihe cya gahunda'}</Text>
 
-            {selectedTherapist?.slots.map((slot, i) => (
+            {selectedSpec?.slots?.map((slot, i) => (
               <TouchableOpacity
                 key={i}
-                style={[styles.slotBtn, !slot.available && styles.slotBtnBusy]}
-                onPress={() => selectedTherapist && confirmBook(selectedTherapist, slot)}
-                disabled={!slot.available}
+                style={styles.slotBtn}
+                onPress={() => {
+                  Alert.alert('Booked!', `Session confirmed for ${slot.time}`);
+                  setSelectedSpec(null);
+                }}
               >
-                <View style={styles.slotLeft}>
-                  <Ionicons
-                    name={slot.available ? 'time' : 'time-outline'}
-                    size={18}
-                    color={slot.available ? C.primary : C.textSoft}
-                  />
-                  <Text style={[styles.slotTime, !slot.available && styles.slotTimeBusy]}>
-                    {slot.time}
-                  </Text>
-                </View>
-                <View style={[styles.slotBadge, !slot.available && styles.slotBadgeBusy]}>
-                  <Text style={[styles.slotBadgeText, !slot.available && styles.slotBadgeTextBusy]}>
-                    {slot.available ? 'Available' : 'Booked'}
-                  </Text>
-                </View>
+                <Text style={styles.slotTime}>{slot.time}</Text>
+                <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
               </TouchableOpacity>
             ))}
-
-            <View style={styles.meetNote}>
-              <Ionicons name="videocam" size={16} color={C.primary} />
-              <Text style={styles.meetNoteText}>Session opens in Google Meet</Text>
-            </View>
           </View>
         </View>
       </Modal>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      {/* Messaging Modal */}
+      <Modal visible={!!messagingSpec} animationType="slide">
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+            style={{ flex: 1 }}
+          >
+            <View style={styles.msgHeader}>
+              <TouchableOpacity onPress={() => setMessagingSpec(null)} style={styles.backBtnSmall}>
+                <Ionicons name="chevron-back" size={24} color={Colors.text} />
+              </TouchableOpacity>
+              <View style={styles.msgHeaderInfo}>
+                <Text style={styles.msgHeaderName}>{messagingSpec?.name}</Text>
+                <Text style={styles.msgHeaderStatus}>{language === 'en' ? 'Online' : 'Arahari'}</Text>
+              </View>
+              <View style={{ width: 40 }} />
+            </View>
 
+            <ScrollView 
+              style={styles.msgBody} 
+              contentContainerStyle={{ padding: 20 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.systemMsg}>
+                <Ionicons name="lock-closed" size={14} color={Colors.textMuted} style={{ marginBottom: 8 }} />
+                <Text style={styles.systemMsgText}>
+                  {language === 'en' 
+                    ? `You are starting a private conversation with ${messagingSpec?.name}. This chat is confidential and safe.` 
+                    : `Ugiye gutangira ikiganiro cy’ibanga na ${messagingSpec?.name}. Ibi biganiro ni ibanga kandi birinzwe.`}
+                </Text>
+              </View>
+            </ScrollView>
+
+            <View style={styles.msgInputRow}>
+              <TextInput
+                style={styles.msgInput}
+                placeholder={language === 'en' ? "Type your message..." : "Andika ubutumwa..."}
+                value={messageText}
+                onChangeText={setMessageText}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity 
+                style={[styles.sendBtn, !messageText.trim() && { backgroundColor: '#E2E8F0' }]} 
+                onPress={sendMessage}
+                disabled={!messageText.trim()}
+              >
+                <Ionicons name="send" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        
         {/* Profile Header */}
-        <LinearGradient colors={[C.primary, C.accent]} style={styles.profileHeader}>
+        <View style={styles.profileHeader}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={36} color="#fff" />
+            <Ionicons name="person" size={42} color={Colors.primary} />
+            <TouchableOpacity style={styles.avatarEdit}>
+              <Ionicons name="camera" size={12} color="#fff" />
+            </TouchableOpacity>
           </View>
-          <Text style={styles.username}>{user?.name || 'Anonymous User'}</Text>
-          <Text style={styles.userSub}>Your journey is private & safe 🌿</Text>
-        </LinearGradient>
+
+          {isEditingName ? (
+            <View style={styles.editNameRow}>
+              <TextInput 
+                style={styles.nameInput} 
+                value={name} 
+                onChangeText={setName} 
+                autoFocus 
+              />
+              <TouchableOpacity onPress={() => setIsEditingName(false)} style={styles.saveSmallBtn}>
+                <Ionicons name="checkmark" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.nameDisplay} onPress={() => setIsEditingName(true)}>
+              <Text style={styles.username}>{name}</Text>
+              <Ionicons name="pencil" size={14} color={Colors.primary} style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
+          )}
+          
+          <View style={styles.phoneSection}>
+            {isEditingPhone ? (
+              <View style={styles.phoneInputRow}>
+                <TextInput 
+                  style={styles.phoneInput} 
+                  value={phone} 
+                  onChangeText={setPhone} 
+                  keyboardType="phone-pad"
+                  autoFocus
+                />
+                <TouchableOpacity onPress={() => setIsEditingPhone(false)} style={styles.savePhoneBtn}>
+                  <Text style={styles.savePhoneText}>{language === 'en' ? 'Save' : 'Bika'}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.phoneDisplay} onPress={() => setIsEditingPhone(true)}>
+                <Ionicons name="call-outline" size={14} color={Colors.textMuted} />
+                <Text style={styles.phoneText}>{phone}</Text>
+                <Ionicons name="pencil" size={12} color={Colors.primary} style={{ marginLeft: 4 }} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.headerLangRow}>
+            <TouchableOpacity 
+              style={[styles.headerLangBtn, language === 'en' && styles.headerLangBtnActive]} 
+              onPress={() => setLanguage('en')}
+            >
+              <Text style={[styles.headerLangText, language === 'en' && styles.headerLangTextActive]}>English</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.headerLangBtn, language === 'kn' && styles.headerLangBtnActive]} 
+              onPress={() => setLanguage('kn')}
+            >
+              <Text style={[styles.headerLangText, language === 'kn' && styles.headerLangTextActive]}>Kinyarwanda</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Stats */}
         <View style={styles.statsRow}>
           {STATS.map((s, i) => (
             <View key={i} style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: s.color + '20' }]}>
-                <Ionicons name={s.icon as any} size={18} color={s.color} />
+              <View style={[styles.statIcon, { backgroundColor: s.color + '15' }]}>
+                <Ionicons name={s.icon as any} size={20} color={s.color} />
               </View>
               <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
               <Text style={styles.statLabel}>{s.label}</Text>
@@ -206,181 +275,146 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Teleconsultation */}
+        {/* Professional Support Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Book a Therapist</Text>
-          <Text style={styles.sectionSub}>Tap a therapist to see availability & join via Google Meet</Text>
+          <Text style={styles.sectionTitle}>{language === 'en' ? 'Professional Support' : 'Ubufasha bw’inzobere'}</Text>
+          <Text style={styles.sectionSub}>{language === 'en' ? 'Directly message, call, or book a session.' : 'Andika, hamagara, cyangwa fashisha gahunda.'}</Text>
 
-          {THERAPISTS.map(t => {
-            const isBooked = bookedSlot?.therapistId === t.id;
-            const availableCount = t.slots.filter(s => s.available).length;
-
-            return (
-              <View key={t.id} style={styles.therapistCard}>
-                <View style={styles.therapistTop}>
-                  <View style={styles.therapistAvatar}>
-                    <Ionicons name="person" size={20} color="#fff" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.therapistName}>{t.name}</Text>
-                    <Text style={styles.therapistSpec}>{t.specialty}</Text>
-                    <View style={styles.therapistMeta}>
-                      <Ionicons name="star" size={12} color="#FFC107" />
-                      <Text style={styles.metaText}>{t.rating}</Text>
-                      <Text style={styles.metaDot}>•</Text>
-                      <Text style={styles.metaText}>{t.sessions} sessions</Text>
-                      <Text style={styles.metaDot}>•</Text>
-                      <Text style={[styles.metaText, { color: C.primary, fontWeight: '700' }]}>{t.price}</Text>
-                    </View>
-                  </View>
+          {SPECIALISTS.map(spec => (
+            <View key={spec.id} style={styles.specCard}>
+              <View style={styles.specHeader}>
+                <View style={[styles.specIcon, { backgroundColor: spec.color + '15' }]}>
+                  <Ionicons name={spec.icon as any} size={24} color={spec.color} />
                 </View>
-
-                {/* Availability preview */}
-                <View style={styles.availRow}>
-                  <View style={[styles.availDot, { backgroundColor: availableCount > 0 ? '#4CAF50' : '#EF5350' }]} />
-                  <Text style={styles.availText}>
-                    {availableCount > 0 ? `${availableCount} slots available` : 'No slots today'}
-                  </Text>
-                </View>
-
-                {/* Action buttons */}
-                <View style={styles.therapistActions}>
-                  <TouchableOpacity
-                    style={[styles.viewSlotsBtn, isBooked && styles.viewSlotsBtnBooked]}
-                    onPress={() => setSelectedTherapist(t)}
-                  >
-                    <Ionicons name="calendar" size={15} color={isBooked ? '#fff' : C.primary} />
-                    <Text style={[styles.viewSlotsBtnText, isBooked && { color: '#fff' }]}>
-                      {isBooked ? `✓ Booked — ${bookedSlot?.slot}` : 'View Availability'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.meetBtn}
-                    onPress={() => Linking.openURL(t.meetLink)}
-                  >
-                    <Ionicons name="videocam" size={15} color="#fff" />
-                    <Text style={styles.meetBtnText}>Meet</Text>
-                  </TouchableOpacity>
+                <View>
+                  <Text style={styles.specName}>{spec.name}</Text>
+                  <Text style={[styles.specRole, { color: spec.color }]}>{language === 'en' ? spec.roleLabel : spec.roleLabelK}</Text>
                 </View>
               </View>
-            );
-          })}
-        </View>
 
-        {/* Settings */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-          {[
-            { label: 'Push Notifications',  icon: 'notifications', value: notifications,   set: setNotifications },
-            { label: 'Stay Anonymous',       icon: 'eye-off',       value: anonymous,       set: setAnonymous },
-            { label: 'Daily Mood Reminder',  icon: 'alarm',         value: dailyReminder,   set: setDailyReminder },
-          ].map((s, i) => (
-            <View key={i} style={styles.settingRow}>
-              <View style={styles.settingLeft}>
-                <View style={styles.settingIcon}>
-                  <Ionicons name={s.icon as any} size={18} color={C.primary} />
-                </View>
-                <Text style={styles.settingText}>{s.label}</Text>
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('message', spec)}>
+                  <Ionicons name="chatbubble" size={16} color={Colors.primary} />
+                  <Text style={styles.actionBtnText}>{language === 'en' ? 'Message' : 'Andika'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('call', spec)}>
+                  <Ionicons name="call" size={16} color={Colors.primary} />
+                  <Text style={styles.actionBtnText}>{language === 'en' ? 'Call' : 'Hamagara'}</Text>
+                </TouchableOpacity>
+                
+                {spec.role !== 'social_worker' && (
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('book', spec)}>
+                    <Ionicons name="calendar" size={16} color={Colors.primary} />
+                    <Text style={styles.actionBtnText}>{language === 'en' ? 'Book' : 'Gahunda'}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <Switch
-                value={s.value}
-                onValueChange={s.set}
-                trackColor={{ false: '#E0E0E0', true: C.light }}
-                thumbColor={s.value ? C.primary : '#f4f3f4'}
-              />
             </View>
           ))}
         </View>
 
-        {/* Support */}
+        {/* Account Settings */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          {[
-            { label: 'Help & FAQ',           icon: 'help-circle',        onPress: () => {} },
-            { label: 'About Humura',         icon: 'information-circle', onPress: () => {} },
-            { label: 'Crisis Helpline: 116', icon: 'call',               onPress: () => Linking.openURL('tel:116'), color: '#EF5350' },
-            { label: 'Logout',               icon: 'log-out-outline',    onPress: handleLogout, color: '#EF5350' },
-          ].map((o, i) => (
-            <TouchableOpacity key={i} style={styles.optionRow} onPress={o.onPress}>
-              <View style={styles.settingIcon}>
-                <Ionicons name={o.icon as any} size={18} color={o.color ?? C.primary} />
-              </View>
-              <Text style={[styles.settingText, { flex: 1 }, o.color && { color: o.color }]}>{o.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color="#ccc" />
-            </TouchableOpacity>
-          ))}
+          <Text style={styles.sectionTitle}>{language === 'en' ? 'Account Settings' : 'Igenamiterere rya konti'}</Text>
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="eye-off-outline" size={20} color={Colors.textMuted} />
+              <Text style={styles.settingText}>{language === 'en' ? 'Stay Anonymous' : 'Guma mu ibanga'}</Text>
+            </View>
+            <Switch value={anonymous} onValueChange={setAnonymous} />
+          </View>
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <Ionicons name="notifications-outline" size={20} color={Colors.textMuted} />
+              <Text style={styles.settingText}>{language === 'en' ? 'Notifications' : 'Imenyesha'}</Text>
+            </View>
+            <Switch value={notifications} onValueChange={setNotifications} />
+          </View>
+          
+          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+            <Ionicons name="log-out-outline" size={20} color="#F44336" />
+            <Text style={styles.logoutText}>{language === 'en' ? 'Logout' : 'Sohoka'}</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={{ height: 24 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scroll: { paddingBottom: 40 },
 
-  // Profile Header
-  profileHeader: { alignItems: 'center', paddingTop: 36, paddingBottom: 28 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 3, borderColor: 'rgba(255,255,255,0.5)' },
-  username: { fontSize: 20, fontWeight: '800', color: '#fff' },
-  userSub: { fontSize: 14, color: 'rgba(255,255,255,0.82)', marginTop: 4 },
+  profileHeader: { alignItems: 'center', paddingTop: 40, paddingBottom: 32, backgroundColor: Colors.white, ...Shadows.soft },
+  avatar: { width: 80, height: 80, borderRadius: 28, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+  avatarEdit: { position: 'absolute', bottom: -4, right: -4, width: 24, height: 24, borderRadius: 12, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
+  nameDisplay: { flexDirection: 'row', alignItems: 'center' },
+  username: { fontSize: 22, fontWeight: '900', color: Colors.text },
+  editNameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  nameInput: { fontSize: 20, fontWeight: '800', color: Colors.text, borderBottomWidth: 1, borderBottomColor: Colors.primary, minWidth: 150, textAlign: 'center' },
+  saveSmallBtn: { backgroundColor: Colors.primary, width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
 
-  // Stats
-  statsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginTop: 16, marginBottom: 8 },
-  statCard: { flex: 1, backgroundColor: C.card, borderRadius: 16, padding: 12, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
-  statIcon: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-  statValue: { fontSize: 18, fontWeight: '800' },
-  statLabel: { fontSize: 10, color: C.textSoft, textAlign: 'center', marginTop: 2, fontWeight: '500' },
+  phoneSection: { marginTop: 12 },
+  phoneDisplay: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  phoneText: { fontSize: 13, color: Colors.textMuted, fontWeight: '600' },
+  phoneInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  phoneInput: { backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, fontSize: 13, minWidth: 140, fontWeight: '600', color: Colors.text },
+  savePhoneBtn: { backgroundColor: Colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  savePhoneText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 
-  // Section
-  section: { marginHorizontal: 16, marginBottom: 16, backgroundColor: C.card, borderRadius: 20, padding: 20, shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 12, elevation: 2 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: C.text, marginBottom: 4 },
-  sectionSub: { fontSize: 13, color: C.textSoft, marginBottom: 16, lineHeight: 18 },
+  headerLangRow: { flexDirection: 'row', marginTop: 24, backgroundColor: '#F1F5F9', borderRadius: 20, padding: 4 },
+  headerLangBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 18 },
+  headerLangBtnActive: { backgroundColor: Colors.white, ...Shadows.soft },
+  headerLangText: { color: Colors.textMuted, fontSize: 12, fontWeight: '700' },
+  headerLangTextActive: { color: Colors.primary },
 
-  // Therapist Card
-  therapistCard: { borderBottomWidth: 1, borderBottomColor: '#EEF4FF', paddingVertical: 16 },
-  therapistTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  therapistAvatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  therapistName: { fontSize: 15, fontWeight: '700', color: C.text },
-  therapistSpec: { fontSize: 12, color: C.textSoft, marginTop: 2 },
-  therapistMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' },
-  metaText: { fontSize: 11, color: C.textMid, marginLeft: 3 },
-  metaDot: { fontSize: 11, color: '#ccc', marginHorizontal: 3 },
-  availRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  availDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  availText: { fontSize: 13, color: C.textMid, fontWeight: '500' },
-  therapistActions: { flexDirection: 'row', gap: 10 },
-  viewSlotsBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: C.primary, gap: 6 },
-  viewSlotsBtnBooked: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
-  viewSlotsBtnText: { fontSize: 13, fontWeight: '700', color: C.primary },
-  meetBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, backgroundColor: C.primary, gap: 6 },
-  meetBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 20, gap: 12, marginTop: 24 },
+  statCard: { flex: 1, backgroundColor: Colors.white, borderRadius: 20, padding: 16, alignItems: 'center', ...Shadows.soft, borderWidth: 1, borderColor: '#F1F5F9' },
+  statIcon: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  statValue: { fontSize: 18, fontWeight: '900' },
+  statLabel: { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
 
-  // Settings
-  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF4FF' },
-  settingLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  settingIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: C.sky, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  settingText: { fontSize: 15, color: C.text, fontWeight: '500' },
-  optionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEF4FF' },
+  section: { marginHorizontal: 20, marginTop: 24, backgroundColor: Colors.white, borderRadius: 24, padding: 20, ...Shadows.soft, borderWidth: 1, borderColor: '#F1F5F9' },
+  sectionTitle: { fontSize: 18, fontWeight: '900', color: Colors.text, marginBottom: 4 },
+  sectionSub: { fontSize: 14, color: Colors.textMuted, marginBottom: 20, fontWeight: '500' },
 
-  // Modal
+  specCard: { marginBottom: 24, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingBottom: 20 },
+  specHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
+  specIcon: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  specName: { fontSize: 17, fontWeight: '800', color: Colors.text },
+  specRole: { fontSize: 13, fontWeight: '700', marginTop: 2 },
+
+  actionRow: { flexDirection: 'row', gap: 8 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC', paddingVertical: 10, borderRadius: 12, gap: 6, borderWidth: 1, borderColor: '#E2E8F0' },
+  actionBtnText: { fontSize: 12, fontWeight: '800', color: Colors.text },
+
+  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  settingText: { fontSize: 15, fontWeight: '700', color: Colors.text },
+  
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, paddingVertical: 14, backgroundColor: '#FFF5F5', borderRadius: 16, gap: 10 },
+  logoutText: { color: '#F44336', fontWeight: '800', fontSize: 15 },
+
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: C.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 36 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: C.text },
-  modalSub: { fontSize: 13, color: C.textSoft, marginBottom: 20 },
-  slotBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1.5, borderColor: C.primary, marginBottom: 10, backgroundColor: C.sky },
-  slotBtnBusy: { borderColor: '#E0E0E0', backgroundColor: '#FAFAFA' },
-  slotLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  slotTime: { fontSize: 15, fontWeight: '600', color: C.text },
-  slotTimeBusy: { color: C.textSoft },
-  slotBadge: { backgroundColor: C.primary, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
-  slotBadgeBusy: { backgroundColor: '#E0E0E0' },
-  slotBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  slotBadgeTextBusy: { color: C.textSoft },
-  meetNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, gap: 8 },
-  meetNoteText: { fontSize: 13, color: C.primary, fontWeight: '600' },
+  modalCard: { backgroundColor: Colors.white, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 20, fontWeight: '900', color: Colors.text },
+  modalSub: { fontSize: 14, color: Colors.textMuted, marginBottom: 24 },
+  slotBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#F8FAFC', borderRadius: 16, marginBottom: 12 },
+  slotTime: { fontSize: 16, fontWeight: '700', color: Colors.text },
+
+  // Messaging Styles
+  msgHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  backBtnSmall: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center' },
+  msgHeaderInfo: { alignItems: 'center' },
+  msgHeaderName: { fontSize: 17, fontWeight: '800', color: Colors.text },
+  msgHeaderStatus: { fontSize: 12, color: '#27AE60', fontWeight: '700' },
+  msgBody: { flex: 1 },
+  systemMsg: { backgroundColor: '#F8FAFC', padding: 20, borderRadius: 24, marginBottom: 20, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
+  systemMsgText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, fontWeight: '600' },
+  msgInputRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#fff' },
+  msgInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: Colors.text, maxHeight: 120 },
+  sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', ...Shadows.soft },
 });

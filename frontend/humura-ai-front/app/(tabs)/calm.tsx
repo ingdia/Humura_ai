@@ -6,27 +6,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Shadows } from '../../src/constants/theme';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
-
-const C = {
-  primary: '#4a90e2',
-  mid:     '#357ABD',
-  accent:  '#2C5F8F',
-  sky:     '#EBF4FF',
-  bg:      '#F0F7FF',
-  card:    '#FFFFFF',
-  text:    '#0D1B2A',
-  textMid: '#37474F',
-  textSoft:'#78909C',
-  border:  '#DDE8FF',
-};
 
 const SCENES = [
   {
     id: 'forest', label: 'Forest', emoji: '🌲',
     desc: 'Quiet forest, birds singing softly',
-    image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
     vrUrl: 'https://www.youtube.com/watch?v=Un4QFMFnxe4',
     ambience: 'Birds · Wind · Leaves',
   },
@@ -44,13 +33,6 @@ const SCENES = [
     vrUrl: 'https://www.youtube.com/watch?v=1ZYbU82GVz4',
     ambience: 'Wind · Silence · Peace',
   },
-  {
-    id: 'rain', label: 'Rain', emoji: '🌧️',
-    desc: 'Soft rain on leaves, cozy inside',
-    image: 'https://images.unsplash.com/photo-1428592953211-077101b2021b?w=800&q=80',
-    vrUrl: 'https://www.youtube.com/watch?v=mPZkdNFkNps',
-    ambience: 'Rain · Thunder · Calm',
-  },
 ];
 
 const TECHNIQUES = [
@@ -62,12 +44,12 @@ const TECHNIQUES = [
 const PHASES = ['Breathe in...', 'Hold...', 'Breathe out...', 'Rest...'];
 
 export default function CalmScreen() {
+  const { t, language } = useLanguage();
   const [scene, setScene]             = useState(SCENES[0]);
   const [technique, setTechnique]     = useState(TECHNIQUES[0]);
-  const [mode, setMode]               = useState<'browse' | 'session' | 'vr' | 'done'>('browse');
+  const [mode, setMode]               = useState<'browse' | 'session' | 'done'>('browse');
   const [phase, setPhase]             = useState(0);
   const [seconds, setSeconds]         = useState(0);
-  const [postMood, setPostMood]       = useState<string | null>(null);
 
   const scale       = useRef(new Animated.Value(1)).current;
   const ringScale   = useRef(new Animated.Value(1)).current;
@@ -75,24 +57,28 @@ export default function CalmScreen() {
   const activeRef   = useRef(false);
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const resetSession = () => {
+    activeRef.current = false;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSeconds(0);
+    setPhase(0);
+    scale.setValue(1);
+    ringScale.setValue(1);
+    ringOpacity.setValue(0.25);
+    scale.stopAnimation();
+    ringScale.stopAnimation();
+    ringOpacity.stopAnimation();
+  };
+
   useEffect(() => {
     if (mode === 'session') {
       activeRef.current = true;
       runCycle(0);
       timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000);
     } else {
-      activeRef.current = false;
-      if (timerRef.current) clearInterval(timerRef.current);
-      scale.stopAnimation();
-      ringScale.stopAnimation();
-      ringOpacity.stopAnimation();
-      Animated.parallel([
-        Animated.timing(scale,       { toValue: 1,    duration: 600, useNativeDriver: true }),
-        Animated.timing(ringScale,   { toValue: 1,    duration: 600, useNativeDriver: true }),
-        Animated.timing(ringOpacity, { toValue: 0.25, duration: 600, useNativeDriver: true }),
-      ]).start();
+      resetSession();
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => resetSession();
   }, [mode]);
 
   const runCycle = (p: number) => {
@@ -113,126 +99,45 @@ export default function CalmScreen() {
     anim.start(() => { if (activeRef.current) runCycle((p + 1) % 4); });
   };
 
-  const openVR = async () => {
-    Alert.alert(
-      '🥽 VR Mode',
-      `Open "${scene.label}" in VR?\n\nPlace your phone in a Google Cardboard headset for a fully immersive 360° experience.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Open VR',
-          onPress: async () => {
-            const canOpen = await Linking.canOpenURL(scene.vrUrl);
-            if (canOpen) {
-              await Linking.openURL(scene.vrUrl);
-            } else {
-              await Linking.openURL('https://www.youtube.com/results?search_query=360+vr+nature+relaxation');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  // ── POST SESSION ──
-  if (mode === 'done') {
-    return (
-      <View style={{ flex: 1, backgroundColor: C.bg }}>
-        <StatusBar barStyle="light-content" backgroundColor={C.primary} />
-        <LinearGradient colors={[C.primary, C.accent]} style={styles.doneHeader}>
-          <View style={styles.doneIconWrap}>
-            <Ionicons name="checkmark-circle" size={52} color="#fff" />
-          </View>
-          <Text style={styles.doneTitle}>Session Complete</Text>
-          <Text style={styles.doneDuration}>{fmt(seconds)} · {scene.label} · {technique.name}</Text>
-        </LinearGradient>
-        <View style={styles.doneBody}>
-          <Text style={styles.doneQ}>How do you feel now?</Text>
-          <View style={styles.doneMoodRow}>
-            {[
-              { label: 'Much better', emoji: '😌' },
-              { label: 'A bit better', emoji: '🙂' },
-              { label: 'Same', emoji: '😐' },
-              { label: 'Still hard', emoji: '😔' },
-            ].map(m => (
-              <TouchableOpacity
-                key={m.label}
-                style={[styles.doneMoodBtn, postMood === m.label && styles.doneMoodBtnActive]}
-                onPress={() => setPostMood(m.label)}
-              >
-                <Text style={styles.doneMoodEmoji}>{m.emoji}</Text>
-                <Text style={[styles.doneMoodLabel, postMood === m.label && { color: C.primary, fontWeight: '700' }]}>
-                  {m.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity
-            style={styles.doneBtn}
-            onPress={() => { setMode('browse'); setPostMood(null); setSeconds(0); }}
-          >
-            <Text style={styles.doneBtnText}>Back to Calm</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  const openVR = (url: string) => {
+    Linking.openURL(url);
+  };
 
-  // ── ACTIVE SESSION ──
   if (mode === 'session') {
     return (
       <ImageBackground source={{ uri: scene.image }} style={styles.sessionBg} resizeMode="cover">
         <LinearGradient
-          colors={['rgba(13,27,42,0.55)', 'rgba(44,95,143,0.70)', 'rgba(13,27,42,0.80)']}
+          colors={['rgba(26,26,46,0.5)', 'rgba(74,144,226,0.3)', 'rgba(26,26,46,0.8)']}
           style={styles.sessionOverlay}
         >
           <SafeAreaView style={{ flex: 1 }}>
-            {/* Top bar */}
             <View style={styles.sessionTop}>
               <TouchableOpacity style={styles.sessionBackBtn} onPress={() => { setMode('done'); }}>
-                <Ionicons name="stop" size={18} color="#fff" />
-                <Text style={styles.sessionBackText}>End</Text>
+                <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
+              <View style={styles.sessionAmbience}>
+                <Ionicons name="musical-notes" size={14} color="#fff" />
+                <Text style={styles.ambienceText}>{scene.ambience}</Text>
+              </View>
               <View style={styles.sessionTimerPill}>
-                <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.85)" />
                 <Text style={styles.sessionTimer}>{fmt(seconds)}</Text>
               </View>
-              <TouchableOpacity style={styles.vrPillBtn} onPress={openVR}>
-                <Ionicons name="glasses-outline" size={16} color="#fff" />
-                <Text style={styles.vrPillText}>VR</Text>
-              </TouchableOpacity>
             </View>
 
-            {/* Scene info */}
-            <View style={styles.sessionSceneRow}>
-              <Text style={styles.sessionSceneEmoji}>{scene.emoji}</Text>
-              <Text style={styles.sessionSceneName}>{scene.label}</Text>
-              <Text style={styles.sessionAmbience}>{scene.ambience}</Text>
-            </View>
-
-            {/* Breathing circle */}
             <View style={styles.sessionCircleWrap}>
               <Animated.View style={[styles.ringPulse, { transform: [{ scale: ringScale }], opacity: ringOpacity }]} />
               <Animated.View style={[styles.sessionCircle, { transform: [{ scale }] }]}>
-                <LinearGradient colors={['rgba(74,144,226,0.9)', 'rgba(44,95,143,0.95)']} style={styles.sessionCircleGrad}>
-                  <Ionicons name="leaf" size={36} color="#fff" />
+                <LinearGradient colors={[Colors.primary, Colors.secondary]} style={styles.sessionCircleGrad}>
+                  <Ionicons name="leaf" size={42} color="#fff" />
                 </LinearGradient>
               </Animated.View>
             </View>
 
-            {/* Phase */}
             <View style={styles.sessionPhaseWrap}>
               <Text style={styles.sessionPhase}>{PHASES[phase]}</Text>
               <Text style={styles.sessionTechnique}>{technique.name} · {technique.label}</Text>
-            </View>
-
-            {/* Progress dots */}
-            <View style={styles.phaseDots}>
-              {PHASES.map((_, i) => (
-                <View key={i} style={[styles.phaseDot, i === phase && styles.phaseDotActive]} />
-              ))}
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -240,50 +145,44 @@ export default function CalmScreen() {
     );
   }
 
-  // ── BROWSE ──
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={C.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* Header */}
-        <LinearGradient colors={[C.primary, C.accent]} style={styles.header}>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.headerTitle}>Calm Mode</Text>
-              <Text style={styles.headerSub}>Breathe · Relax · Reset</Text>
-            </View>
-            <View style={styles.vrBadge}>
-              <Ionicons name="glasses" size={18} color="#fff" />
-              <Text style={styles.vrBadgeText}>VR Ready</Text>
-            </View>
-          </View>
-        </LinearGradient>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>{t('calm_title')}</Text>
+          <Text style={styles.headerSub}>{t('calm_desc')}</Text>
+          <View style={styles.titleUnderline} />
+        </View>
 
-        {/* Scene Cards */}
+        {/* Guided Visual Journeys (Background Selection) */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>CHOOSE YOUR SCENE</Text>
+          <Text style={styles.sectionLabel}>{language === 'en' ? 'CHOOSE YOUR CALM SCENE' : 'HITAMO AHO WICARA'}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sceneScroll}>
             {SCENES.map(s => (
               <TouchableOpacity
                 key={s.id}
                 style={[styles.sceneCard, scene.id === s.id && styles.sceneCardActive]}
                 onPress={() => setScene(s)}
-                activeOpacity={0.85}
+                activeOpacity={0.9}
               >
-                <ImageBackground source={{ uri: s.image }} style={styles.sceneCardBg} imageStyle={{ borderRadius: 16 }}>
-                  <LinearGradient
-                    colors={['transparent', 'rgba(13,27,42,0.82)']}
-                    style={styles.sceneCardOverlay}
-                  >
+                <ImageBackground source={{ uri: s.image }} style={styles.sceneCardBg} imageStyle={{ borderRadius: 24 }}>
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.sceneCardOverlay}>
                     {scene.id === s.id && (
-                      <View style={styles.sceneCheckBadge}>
-                        <Ionicons name="checkmark" size={12} color="#fff" />
+                      <View style={styles.selectedBadge}>
+                        <Ionicons name="checkmark-circle" size={20} color="#fff" />
                       </View>
                     )}
-                    <Text style={styles.sceneCardEmoji}>{s.emoji}</Text>
-                    <Text style={styles.sceneCardLabel}>{s.label}</Text>
-                    <Text style={styles.sceneCardAmbience}>{s.ambience}</Text>
+                    <View>
+                      <Text style={styles.sceneCardEmoji}>{s.emoji}</Text>
+                      <Text style={styles.sceneCardLabel}>{s.label}</Text>
+                      <TouchableOpacity style={styles.vrLinkBtn} onPress={() => openVR(s.vrUrl)}>
+                        <Ionicons name="videocam" size={14} color="#fff" />
+                        <Text style={styles.vrLinkText}>360° VR</Text>
+                      </TouchableOpacity>
+                    </View>
                   </LinearGradient>
                 </ImageBackground>
               </TouchableOpacity>
@@ -291,26 +190,9 @@ export default function CalmScreen() {
           </ScrollView>
         </View>
 
-        {/* VR Banner */}
-        <TouchableOpacity style={styles.vrBanner} onPress={openVR} activeOpacity={0.88}>
-          <LinearGradient colors={[C.accent, C.primary]} style={styles.vrBannerGrad}>
-            <View style={styles.vrBannerLeft}>
-              <View style={styles.vrIconWrap}>
-                <Ionicons name="glasses" size={26} color="#fff" />
-              </View>
-              <View>
-                <Text style={styles.vrBannerTitle}>Launch VR Experience</Text>
-                <Text style={styles.vrBannerSub}>{scene.label} · 360° immersive · Google Cardboard</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Technique */}
+        {/* Breathing Technique Card */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>BREATHING TECHNIQUE</Text>
-          <Text style={styles.cardTitle}>Choose a pattern</Text>
+          <Text style={styles.cardTitle}>{language === 'en' ? 'Breathing Technique' : 'Uburyo bwo guhumeka'}</Text>
           {TECHNIQUES.map(t => (
             <TouchableOpacity
               key={t.label}
@@ -320,140 +202,98 @@ export default function CalmScreen() {
               <View style={[styles.radio, technique.label === t.label && styles.radioActive]}>
                 {technique.label === t.label && <View style={styles.radioDot} />}
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.techniqueName, technique.label === t.label && { color: C.primary }]}>
-                  {t.name}
-                </Text>
-                <Text style={styles.techniquePattern}>{t.label} · {t.desc}</Text>
+              <View>
+                <Text style={styles.techniqueName}>{t.name}</Text>
+                <Text style={styles.techniqueDesc}>{t.label} · {t.desc}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Start Button */}
-        <TouchableOpacity
-          style={styles.startBtn}
-          onPress={() => { setSeconds(0); setMode('session'); }}
-          activeOpacity={0.88}
-        >
-          <LinearGradient colors={[C.primary, C.accent]} style={styles.startBtnGrad}>
-            <Ionicons name="play-circle" size={24} color="#fff" />
-            <Text style={styles.startBtnText}>Start Breathing Session</Text>
+        {/* Start Button (No Heart Icon) */}
+        <TouchableOpacity style={styles.startBtn} onPress={() => setMode('session')} activeOpacity={0.88}>
+          <LinearGradient colors={[Colors.primary, Colors.secondary]} style={styles.startBtnGrad}>
+            <Text style={styles.startBtnText}>{language === 'en' ? 'Start Breathing Guide' : 'Tangira guhumeka'}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Tip */}
-        <View style={styles.tipCard}>
-          <View style={styles.tipIcon}>
-            <Ionicons name="bulb-outline" size={16} color={C.primary} />
+        {/* YouTube Calm Music (Quick Links) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>{language === 'en' ? 'CALM MUSIC LIBRARY' : 'INDIRIMBO ZO GUTUZA'}</Text>
+          <View style={styles.card}>
+            {[
+              { id: '1', title: 'Deep Relaxation', url: 'https://www.youtube.com/watch?v=1ZYbU82GVz4' },
+              { id: '2', title: 'Soft Breezy Ambience', url: 'https://www.youtube.com/watch?v=Un4QFMFnxe4' },
+            ].map(m => (
+              <TouchableOpacity key={m.id} style={styles.musicLink} onPress={() => Linking.openURL(m.url)}>
+                <Ionicons name="musical-notes" size={20} color={Colors.primary} />
+                <Text style={styles.musicLinkText}>{m.title}</Text>
+                <Ionicons name="open-outline" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+            ))}
           </View>
-          <Text style={styles.tipText}>
-            Controlled breathing activates your parasympathetic nervous system, reducing cortisol and anxiety within minutes.
-          </Text>
         </View>
 
-        <View style={{ height: 20 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scroll: { paddingBottom: 16 },
 
-  // Header
-  header: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 24 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
-  vrBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, gap: 6 },
-  vrBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  header: { paddingHorizontal: 20, paddingTop: 32, paddingBottom: 24, backgroundColor: Colors.white, ...Shadows.soft },
+  headerTitle: { fontSize: 28, fontWeight: '900', color: Colors.text },
+  headerSub: { fontSize: 15, color: Colors.textMuted, marginTop: 4, fontWeight: '500' },
+  titleUnderline: { width: 40, height: 4, backgroundColor: Colors.primary, borderRadius: 2, marginTop: 12 },
 
-  // Section
-  section: { marginTop: 16 },
-  sectionLabel: { fontSize: 10, fontWeight: '700', color: C.primary, letterSpacing: 1, marginLeft: 20, marginBottom: 10 },
-
-  // Scene cards
-  sceneScroll: { paddingHorizontal: 16, gap: 12 },
-  sceneCard: { width: 140, height: 180, borderRadius: 16, overflow: 'hidden', marginRight: 4, borderWidth: 2, borderColor: 'transparent' },
-  sceneCardActive: { borderColor: C.primary },
+  section: { marginTop: 24 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: Colors.primary, marginLeft: 20, marginBottom: 12, letterSpacing: 1 },
+  sceneScroll: { paddingHorizontal: 16, gap: 14 },
+  sceneCard: { width: 150, height: 210, borderRadius: 24, overflow: 'hidden', borderWidth: 3, borderColor: 'transparent' },
+  sceneCardActive: { borderColor: Colors.primary },
   sceneCardBg: { flex: 1 },
-  sceneCardOverlay: { flex: 1, padding: 12, justifyContent: 'flex-end' },
-  sceneCheckBadge: { position: 'absolute', top: 10, right: 10, width: 22, height: 22, borderRadius: 11, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center' },
-  sceneCardEmoji: { fontSize: 22, marginBottom: 4 },
-  sceneCardLabel: { fontSize: 14, fontWeight: '700', color: '#fff' },
-  sceneCardAmbience: { fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  sceneCardOverlay: { flex: 1, padding: 16, justifyContent: 'flex-end' },
+  selectedBadge: { position: 'absolute', top: 12, right: 12 },
+  sceneCardEmoji: { fontSize: 24, marginBottom: 4 },
+  sceneCardLabel: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  vrLinkBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 4, marginTop: 8 },
+  vrLinkText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 
-  // VR Banner
-  vrBanner: { marginHorizontal: 16, marginTop: 16, borderRadius: 18, overflow: 'hidden' },
-  vrBannerGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18 },
-  vrBannerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  vrIconWrap: { width: 48, height: 48, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  vrBannerTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  vrBannerSub: { fontSize: 11, color: 'rgba(255,255,255,0.78)', marginTop: 2 },
+  card: { backgroundColor: Colors.white, marginHorizontal: 20, marginTop: 24, borderRadius: 24, padding: 20, ...Shadows.soft, borderWidth: 1, borderColor: '#F1F5F9' },
+  cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 18 },
 
-  // Card
-  card: { backgroundColor: C.card, marginHorizontal: 16, marginTop: 16, borderRadius: 18, padding: 18, shadowColor: C.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.07, shadowRadius: 10, elevation: 2 },
-  cardLabel: { fontSize: 10, fontWeight: '700', color: C.primary, letterSpacing: 1, marginBottom: 2 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 14 },
+  techniqueRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 10 },
+  techniqueRowActive: { borderColor: Colors.primary, backgroundColor: '#F8FAFC' },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  radioActive: { borderColor: Colors.primary },
+  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary },
+  techniqueName: { fontSize: 15, fontWeight: '800', color: Colors.text },
+  techniqueDesc: { fontSize: 12, color: Colors.textMuted, marginTop: 2, fontWeight: '500' },
 
-  // Technique
-  techniqueRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, marginBottom: 8, backgroundColor: C.bg },
-  techniqueRowActive: { borderColor: C.primary, backgroundColor: C.sky },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: C.border, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  radioActive: { borderColor: C.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.primary },
-  techniqueName: { fontSize: 14, fontWeight: '700', color: C.text },
-  techniquePattern: { fontSize: 12, color: C.textSoft, marginTop: 1 },
-
-  // Start button
-  startBtn: { marginHorizontal: 16, marginTop: 16, borderRadius: 18, overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 },
-  startBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, gap: 10 },
+  startBtn: { marginHorizontal: 20, marginTop: 24, borderRadius: 16, overflow: 'hidden', ...Shadows.premium },
+  startBtnGrad: { alignItems: 'center', justifyContent: 'center', paddingVertical: 18 },
   startBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 
-  // Tip
-  tipCard: { flexDirection: 'row', alignItems: 'flex-start', marginHorizontal: 16, marginTop: 14, backgroundColor: C.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.border },
-  tipIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.sky, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  tipText: { flex: 1, fontSize: 13, color: C.textMid, lineHeight: 19 },
+  musicLink: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  musicLinkText: { flex: 1, fontSize: 15, fontWeight: '600', color: Colors.text },
 
-  // ── SESSION SCREEN ──
+  // Session
   sessionBg: { flex: 1, width, height },
   sessionOverlay: { flex: 1 },
-  sessionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  sessionBackBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, gap: 6 },
-  sessionBackText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  sessionTimerPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, gap: 6 },
-  sessionTimer: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  vrPillBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.primary, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, gap: 6 },
-  vrPillText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  sessionSceneRow: { alignItems: 'center', paddingTop: 20, paddingBottom: 10 },
-  sessionSceneEmoji: { fontSize: 32, marginBottom: 6 },
-  sessionSceneName: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  sessionAmbience: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 3 },
+  sessionTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 60 },
+  sessionBackBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  sessionAmbience: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
+  ambienceText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  sessionTimerPill: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  sessionTimer: { color: '#fff', fontWeight: '800', fontSize: 14 },
   sessionCircleWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  ringPulse: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(74,144,226,0.25)', borderWidth: 1.5, borderColor: 'rgba(74,144,226,0.5)' },
+  ringPulse: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
   sessionCircle: { width: 150, height: 150, borderRadius: 75, overflow: 'hidden' },
   sessionCircleGrad: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  sessionPhaseWrap: { alignItems: 'center', paddingBottom: 16 },
-  sessionPhase: { fontSize: 26, fontWeight: '800', color: '#fff', textAlign: 'center' },
-  sessionTechnique: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6 },
-  phaseDots: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingBottom: 40 },
-  phaseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
-  phaseDotActive: { backgroundColor: '#fff', width: 24 },
-
-  // ── DONE SCREEN ──
-  doneHeader: { paddingTop: 80, paddingBottom: 40, alignItems: 'center' },
-  doneIconWrap: { marginBottom: 14 },
-  doneTitle: { fontSize: 26, fontWeight: '800', color: '#fff' },
-  doneDuration: { fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 6 },
-  doneBody: { flex: 1, padding: 28, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg },
-  doneQ: { fontSize: 20, fontWeight: '700', color: C.text, marginBottom: 24, textAlign: 'center' },
-  doneMoodRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 32 },
-  doneMoodBtn: { alignItems: 'center', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 16, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.card, minWidth: 100 },
-  doneMoodBtnActive: { borderColor: C.primary, backgroundColor: C.sky },
-  doneMoodEmoji: { fontSize: 24, marginBottom: 4 },
-  doneMoodLabel: { fontSize: 12, color: C.textSoft, fontWeight: '600' },
-  doneBtn: { backgroundColor: C.primary, paddingHorizontal: 44, paddingVertical: 14, borderRadius: 30 },
-  doneBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  sessionPhaseWrap: { alignItems: 'center', paddingBottom: 80 },
+  sessionPhase: { fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+  sessionTechnique: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 12, fontWeight: '600' },
 });

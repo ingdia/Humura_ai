@@ -3,17 +3,15 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-
-const PRIMARY = '#4a90e2';
-const BG = '#FFFFFF';
+import { Colors, Shadows } from '../../src/constants/theme';
 
 const TABS = [
-  { name: 'index',   icon: 'home',        iconActive: 'home'        },
-  { name: 'chat',    icon: 'chatbubbles-outline', iconActive: 'chatbubbles' },
-  { name: 'mood',    icon: 'analytics-outline',   iconActive: 'analytics'   },
-  { name: 'calm',    icon: 'leaf-outline',         iconActive: 'leaf'        },
-  { name: 'feed',    icon: 'people-outline',       iconActive: 'people'      },
-  { name: 'profile', icon: 'person-outline',       iconActive: 'person'      },
+  { name: 'index', icon: 'home-outline', iconActive: 'home' },
+  { name: 'feed', icon: 'people-outline', iconActive: 'people' },
+  { name: 'calm', icon: 'leaf-outline', iconActive: 'leaf' },
+  { name: 'resources', icon: 'book-outline', iconActive: 'book' },
+  { name: 'mood', icon: 'analytics-outline', iconActive: 'analytics' },
+  { name: 'profile', icon: 'person-outline', iconActive: 'person' },
 ];
 
 function PinterestTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -22,7 +20,9 @@ function PinterestTabBar({ state, descriptors, navigation }: BottomTabBarProps) 
       <View style={styles.bar}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
-          const tab = TABS[index];
+          const tab = TABS.find(t => t.name === route.name);
+
+          if (!tab) return null;
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -40,7 +40,7 @@ function PinterestTabBar({ state, descriptors, navigation }: BottomTabBarProps) 
                 <Ionicons
                   name={(isFocused ? tab.iconActive : tab.icon) as any}
                   size={22}
-                  color={isFocused ? '#fff' : '#AABDD4'}
+                  color={isFocused ? '#fff' : Colors.tabInactive}
                 />
               </View>
             </TouchableOpacity>
@@ -57,12 +57,12 @@ export default function TabLayout() {
       tabBar={(props) => <PinterestTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="index"   options={{ title: 'Home' }} />
-      <Tabs.Screen name="chat"    options={{ title: 'AI Chat' }} />
-      <Tabs.Screen name="mood"    options={{ title: 'Mood' }} />
-      <Tabs.Screen name="calm"    options={{ title: 'Calm' }} />
-      <Tabs.Screen name="feed"    options={{ title: 'Community' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index"     options={{ title: 'Home' }} />
+      <Tabs.Screen name="feed"      options={{ title: 'Community' }} />
+      <Tabs.Screen name="calm"      options={{ title: 'Calm' }} />
+      <Tabs.Screen name="resources" options={{ title: 'Library' }} />
+      <Tabs.Screen name="mood"      options={{ title: 'Mood' }} />
+      <Tabs.Screen name="profile"   options={{ title: 'Profile' }} />
     </Tabs>
   );
 }
@@ -71,23 +71,19 @@ const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 28 : 16,
-    left: 24,
-    right: 24,
+    left: 20,
+    right: 20,
     alignItems: 'center',
   },
   bar: {
     flexDirection: 'row',
-    backgroundColor: BG,
+    backgroundColor: Colors.white,
     borderRadius: 40,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#4a90e2',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 16,
+    ...Shadows.premium,
     width: '100%',
   },
   tabItem: {
@@ -103,11 +99,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: PRIMARY,
-    shadowColor: PRIMARY,
+    backgroundColor: Colors.primary,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 4,
   },
 });

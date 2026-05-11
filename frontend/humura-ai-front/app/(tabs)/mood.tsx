@@ -1,300 +1,211 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  SafeAreaView, StatusBar, Dimensions, Animated, TextInput,
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, SafeAreaView, StatusBar, Dimensions,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, Shadows } from '../../src/constants/theme';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
-const C = {
-  primary:  '#4a90e2',
-  mid:      '#357ABD',
-  accent:   '#2C5F8F',
-  sky:      '#EBF4FF',
-  bg:       '#F0F7FF',
-  card:     '#FFFFFF',
-  text:     '#0D1B2A',
-  textMid:  '#37474F',
-  textSoft: '#78909C',
-  border:   '#DDE8FF',
-};
-
 const MOODS = [
-  { value: 'amazing', emoji: '🤩', label: 'Amazing', score: 5 },
-  { value: 'good',    emoji: '😊', label: 'Good',    score: 4 },
-  { value: 'okay',    emoji: '😐', label: 'Okay',    score: 3 },
-  { value: 'sad',     emoji: '😢', label: 'Sad',     score: 2 },
-  { value: 'awful',   emoji: '😩', label: 'Awful',   score: 1 },
+  { id: '1', emoji: '🌟', label: 'Amazing', color: '#FFD700', labelK: 'Nishimye', score: 5 },
+  { id: '2', emoji: '🙂', label: 'Good',    color: '#4CAF50', labelK: 'Meze neza', score: 4 },
+  { id: '3', emoji: '😐', label: 'Okay',    color: '#FF9800', labelK: 'Ndasanzwe', score: 3 },
+  { id: '4', emoji: '😔', label: 'Down',    color: '#2196F3', labelK: 'Ndi mu gahinda', score: 2 },
+  { id: '5', emoji: '😫', label: 'Stressed', color: '#F44336', labelK: 'Naniwe', score: 1 },
 ];
 
 const WEEKLY_DATA = [
   { day: 'Mon', score: 4 },
-  { day: 'Tue', score: 2 },
+  { day: 'Tue', score: 5 },
   { day: 'Wed', score: 3 },
-  { day: 'Thu', score: 5 },
-  { day: 'Fri', score: 4 },
-  { day: 'Sat', score: 3 },
-  { day: 'Sun', score: 0 },
+  { day: 'Thu', score: 4 },
+  { day: 'Fri', score: 2 },
+  { day: 'Sat', score: 5 },
+  { day: 'Sun', score: 5 },
 ];
-
-const INSIGHTS = [
-  { icon: 'trending-up', text: 'Mood improved 40% this week' },
-  { icon: 'moon',        text: 'Better mood after good sleep' },
-  { icon: 'sunny',       text: 'Morning check-ins score higher' },
-  { icon: 'leaf',        text: 'Calm sessions boost mood 30%' },
-];
-
-type Entry = { emoji: string; label: string; time: string; note: string };
 
 export default function MoodScreen() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const { t, language } = useLanguage();
+  const [selectedMoodId, setSelectedMoodId] = useState<string | null>(null);
   const [note, setNote] = useState('');
-  const [showNote, setShowNote] = useState(false);
-  const [history, setHistory] = useState<Entry[]>([
-    { emoji: '😊', label: 'Good',    time: 'Yesterday · 8:00 PM', note: 'Had a productive day' },
-    { emoji: '😐', label: 'Okay',    time: 'Yesterday · 2:00 PM', note: '' },
-    { emoji: '🤩', label: 'Amazing', time: '2 days ago',           note: 'Went for a walk outside' },
-    { emoji: '😢', label: 'Sad',     time: '3 days ago',           note: 'Feeling disconnected' },
-  ]);
 
-  const scaleAnims = useRef(MOODS.map(() => new Animated.Value(1))).current;
-
-  const selectMood = (mood: typeof MOODS[0], i: number) => {
-    setSelected(mood.value);
-    setShowNote(true);
-    Animated.sequence([
-      Animated.timing(scaleAnims[i], { toValue: 1.2, duration: 120, useNativeDriver: true }),
-      Animated.timing(scaleAnims[i], { toValue: 1,   duration: 120, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const saveMood = () => {
-    const mood = MOODS.find(m => m.value === selected);
-    if (!mood) return;
-    const time = `Today · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    setHistory(prev => [{ emoji: mood.emoji, label: mood.label, time, note }, ...prev]);
-    setNote('');
-    setShowNote(false);
-    setSelected(null);
-  };
-
-  const selectedMood = MOODS.find(m => m.value === selected);
-  const maxScore = 5;
+  const activeMood = MOODS.find(m => m.id === selectedMoodId);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={C.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-
-        {/* Header */}
-        <LinearGradient colors={[C.primary, C.accent]} style={styles.header}>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.headerTitle}>Mood Tracker</Text>
-              <Text style={styles.headerSub}>Track how you feel every day</Text>
-            </View>
-            <View style={styles.streakBox}>
-              <Text style={styles.streakEmoji}>🔥</Text>
-              <Text style={styles.streakCount}>5</Text>
-              <Text style={styles.streakText}>streak</Text>
-            </View>
+        
+        {/* Header - Aligned with Calm/Community */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>{t('mood_title')}</Text>
+            <Text style={styles.headerSub}>{language === 'en' ? 'Track your emotional journey.' : 'Kurikirana uko umerewe.'}</Text>
           </View>
-          <View style={styles.statsPills}>
-            <View style={styles.pill}>
-              <Ionicons name="analytics-outline" size={13} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.pillText}>Avg: <Text style={styles.pillBold}>Good</Text></Text>
-            </View>
-            <View style={styles.pill}>
-              <Ionicons name="checkmark-circle-outline" size={13} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.pillText}><Text style={styles.pillBold}>6</Text> logs this week</Text>
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Today's Check-in */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>TODAY'S CHECK-IN</Text>
-          <Text style={styles.cardTitle}>How are you feeling?</Text>
-          <View style={styles.moodRow}>
-            {MOODS.map((mood, i) => (
-              <Animated.View key={mood.value} style={{ transform: [{ scale: scaleAnims[i] }] }}>
-                <TouchableOpacity
-                  style={[styles.moodBtn, selected === mood.value && styles.moodBtnActive]}
-                  onPress={() => selectMood(mood, i)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                  <Text style={[styles.moodLabel, selected === mood.value && styles.moodLabelActive]}>
-                    {mood.label}
-                  </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </View>
-
-          {showNote && selectedMood && (
-            <View style={styles.noteBox}>
-              <Text style={styles.notePrompt}>
-                {selectedMood.emoji}  Feeling {selectedMood.label} — anything on your mind?
-              </Text>
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder="Write a note... (optional)"
-                placeholderTextColor={C.textSoft}
-                style={styles.noteInput}
-                multiline
-                maxLength={200}
-              />
-              <TouchableOpacity style={styles.saveBtn} onPress={saveMood}>
-                <Text style={styles.saveBtnText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={styles.titleUnderline} />
         </View>
 
-        {/* Weekly Chart */}
+        {/* Weekly Trend Card */}
         <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View>
-              <Text style={styles.cardLabel}>THIS WEEK</Text>
-              <Text style={styles.cardTitle}>Mood Overview</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{language === 'en' ? 'Weekly Trend' : 'Imiterere y’icyumweru'}</Text>
+            <View style={styles.insightBadge}>
+              <Text style={styles.insightText}>+12% Stable</Text>
             </View>
           </View>
-          <View style={styles.chart}>
+          <View style={styles.chartRow}>
             {WEEKLY_DATA.map((d, i) => {
-              const h = d.score ? (d.score / maxScore) * 80 : 6;
-              const opacity = d.score ? 0.4 + (d.score / maxScore) * 0.6 : 0.15;
+              const height = (d.score / 5) * 60;
               return (
                 <View key={i} style={styles.chartCol}>
-                  <View style={styles.barWrap}>
-                    <View style={[styles.bar, { height: h, opacity }]} />
-                  </View>
-                  <Text style={[styles.chartDay, !d.score && { color: C.border }]}>{d.day.slice(0, 1)}</Text>
+                  <View style={[styles.chartBar, { height, backgroundColor: d.score > 3 ? '#4CAF50' : d.score === 3 ? '#FF9800' : '#F44336' }]} />
+                  <Text style={styles.chartDay}>{d.day}</Text>
                 </View>
               );
             })}
           </View>
-        </View>
-
-        {/* Insights */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>INSIGHTS</Text>
-          <Text style={styles.cardTitle}>What we noticed</Text>
-          {INSIGHTS.map((ins, i) => (
-            <View key={i} style={styles.insightRow}>
-              <View style={styles.insightIcon}>
-                <Ionicons name={ins.icon as any} size={16} color={C.primary} />
-              </View>
-              <Text style={styles.insightText}>{ins.text}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* History */}
-        <View style={styles.card}>
-          <View style={styles.cardRow}>
-            <View>
-              <Text style={styles.cardLabel}>HISTORY</Text>
-              <Text style={styles.cardTitle}>Recent Entries</Text>
-            </View>
-            <Text style={styles.historyCount}>{history.length} entries</Text>
+          <View style={styles.chartLegend}>
+            <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#4CAF50' }]} /><Text style={styles.legendText}>Good</Text></View>
+            <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#FF9800' }]} /><Text style={styles.legendText}>Okay</Text></View>
+            <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#F44336' }]} /><Text style={styles.legendText}>Bad</Text></View>
           </View>
-          {history.slice(0, 5).map((e, i) => (
-            <View key={i} style={[styles.historyRow, i === history.slice(0, 5).length - 1 && { borderBottomWidth: 0 }]}>
-              <View style={styles.historyLeft}>
-                <Text style={styles.historyEmoji}>{e.emoji}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={styles.historyMeta}>
-                  <Text style={styles.historyLabel}>{e.label}</Text>
-                  <Text style={styles.historyTime}>{e.time}</Text>
-                </View>
-                {e.note ? <Text style={styles.historyNote}>{e.note}</Text> : null}
-              </View>
-            </View>
-          ))}
         </View>
 
-        <View style={{ height: 20 }} />
+        {/* Mood Selection */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t('how_feeling')}</Text>
+          <View style={styles.moodGrid}>
+            {MOODS.map(m => (
+              <TouchableOpacity
+                key={m.id}
+                style={[
+                  styles.moodBox,
+                  selectedMoodId === m.id && { backgroundColor: m.color + '15', borderColor: m.color, borderWidth: 2 }
+                ]}
+                onPress={() => setSelectedMoodId(m.id)}
+              >
+                <Text style={styles.moodEmoji}>{m.emoji}</Text>
+                <Text style={[styles.moodLabel, selectedMoodId === m.id && { color: m.color, fontWeight: '800' }]}>
+                  {language === 'en' ? m.label : m.labelK}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Note Section */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{language === 'en' ? 'What happened?' : 'Byagenze bite?'}</Text>
+          <TextInput
+            style={styles.noteInput}
+            placeholder={language === 'en' ? "Add a small note..." : "Andika ikiri kumutima..."}
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            value={note}
+            onChangeText={setNote}
+          />
+        </View>
+
+        {/* Save Button */}
+        <TouchableOpacity style={styles.saveBtn} activeOpacity={0.88}>
+          <LinearGradient colors={[Colors.primary, Colors.secondary]} style={styles.saveGrad}>
+            <Text style={styles.saveText}>{language === 'en' ? 'Save Entry' : 'Bika amakuru'}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Detailed History */}
+        <View style={styles.historySection}>
+          <Text style={styles.sectionTitle}>{language === 'en' ? 'Mood History' : 'Amateka'}</Text>
+          {[
+            { date: 'Today, 2:30 PM', moodId: '1', note: 'Feeling great after the morning session!', type: 'Good' },
+            { date: 'Yesterday, 8:00 PM', moodId: '3', note: 'A bit tired but stable.', type: 'Okay' },
+            { date: 'May 6, 11:00 AM', moodId: '5', note: 'Heavy traffic and stress at work.', type: 'Bad' },
+          ].map((item, i) => {
+            const mood = MOODS.find(m => m.id === item.moodId);
+            const statusColor = item.type === 'Good' ? '#4CAF50' : item.type === 'Okay' ? '#FF9800' : '#F44336';
+            return (
+              <View key={i} style={styles.historyCard}>
+                <View style={[styles.statusLine, { backgroundColor: statusColor }]} />
+                <View style={styles.historyContent}>
+                  <View style={styles.historyHeader}>
+                    <Text style={styles.historyDate}>{item.date}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
+                      <Text style={[styles.statusTextSmall, { color: statusColor }]}>{item.type}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.historyMain}>
+                    <Text style={styles.historyEmoji}>{mood?.emoji}</Text>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={styles.historyMoodName}>{language === 'en' ? mood?.label : mood?.labelK}</Text>
+                      <Text style={styles.historyNote} numberOfLines={2}>{item.note}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  scroll: { paddingBottom: 100 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scroll: { paddingBottom: 16 },
 
-  // Header
-  header: { paddingHorizontal: 20, paddingTop: 22, paddingBottom: 22 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.72)', marginTop: 2 },
-  streakBox: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 8 },
-  streakEmoji: { fontSize: 20 },
-  streakCount: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  streakText: { fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: '600' },
-  statsPills: { flexDirection: 'row', gap: 10 },
-  pill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, gap: 5 },
-  pillText: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
-  pillBold: { fontWeight: '700', color: '#fff' },
+  header: { paddingHorizontal: 20, paddingTop: 32, paddingBottom: 24, backgroundColor: Colors.white, ...Shadows.soft },
+  headerTitle: { fontSize: 28, fontWeight: '900', color: Colors.text },
+  headerSub: { fontSize: 15, color: Colors.textMuted, marginTop: 4, fontWeight: '500' },
+  titleUnderline: { width: 40, height: 4, backgroundColor: Colors.primary, borderRadius: 2, marginTop: 12 },
 
-  // Card
-  card: {
-    backgroundColor: C.card, marginHorizontal: 16, marginTop: 14,
-    borderRadius: 18, padding: 18,
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07, shadowRadius: 10, elevation: 2,
-  },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 0 },
-  cardLabel: { fontSize: 10, fontWeight: '700', color: C.primary, letterSpacing: 1, marginBottom: 2 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 16 },
-
-  // Mood picker
-  moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  moodBtn: {
-    alignItems: 'center', paddingVertical: 10, borderRadius: 14,
-    borderWidth: 1.5, borderColor: C.border,
-    backgroundColor: C.bg, width: (width - 76) / 5,
-  },
-  moodBtnActive: { borderColor: C.primary, backgroundColor: C.sky },
-  moodEmoji: { fontSize: 26 },
-  moodLabel: { fontSize: 9, color: C.textSoft, marginTop: 5, fontWeight: '600' },
-  moodLabelActive: { color: C.primary, fontWeight: '700' },
-
-  // Note
-  noteBox: { marginTop: 14, backgroundColor: C.bg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: C.border },
-  notePrompt: { fontSize: 13, fontWeight: '600', color: C.text, marginBottom: 10 },
-  noteInput: {
-    backgroundColor: C.card, borderRadius: 10, padding: 12,
-    fontSize: 14, color: C.text, minHeight: 64,
-    borderWidth: 1, borderColor: C.border, marginBottom: 10,
-  },
-  saveBtn: { backgroundColor: C.primary, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
-  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  card: { backgroundColor: Colors.white, marginHorizontal: 20, marginTop: 20, borderRadius: 24, padding: 20, ...Shadows.soft, borderWidth: 1, borderColor: '#F1F5F9' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  cardTitle: { fontSize: 17, fontWeight: '800', color: Colors.text },
+  insightBadge: { backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  insightText: { color: '#2E7D32', fontSize: 12, fontWeight: '800' },
 
   // Chart
-  chart: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  chartRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80, paddingHorizontal: 10 },
   chartCol: { alignItems: 'center', flex: 1 },
-  barWrap: { height: 88, justifyContent: 'flex-end', alignItems: 'center' },
-  bar: { width: 22, borderRadius: 8, backgroundColor: C.primary },
-  chartDay: { fontSize: 11, color: C.textSoft, marginTop: 6, fontWeight: '600' },
+  chartBar: { width: 14, borderRadius: 7, marginBottom: 8 },
+  chartDay: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
+  chartLegend: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 20, borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
 
-  // Insights
-  insightRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.bg },
-  insightIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: C.sky, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  insightText: { fontSize: 14, color: C.textMid, flex: 1, lineHeight: 20 },
+  // Mood Grid
+  moodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  moodBox: { width: (width - 100) / 3, alignItems: 'center', paddingVertical: 16, borderRadius: 20, borderWidth: 1, borderColor: '#F1F5F9' },
+  moodEmoji: { fontSize: 32, marginBottom: 8 },
+  moodLabel: { fontSize: 12, color: Colors.textMuted, fontWeight: '700' },
+
+  noteInput: { backgroundColor: '#F8FAFC', borderRadius: 16, padding: 16, fontSize: 15, color: Colors.text, minHeight: 80, textAlignVertical: 'top' },
+
+  saveBtn: { marginHorizontal: 20, marginTop: 24, borderRadius: 16, overflow: 'hidden', ...Shadows.premium },
+  saveGrad: { paddingVertical: 18, alignItems: 'center' },
+  saveText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 
   // History
-  historyCount: { fontSize: 12, color: C.textSoft, fontWeight: '600', marginBottom: 16 },
-  historyRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.bg },
-  historyLeft: { width: 40, height: 40, borderRadius: 12, backgroundColor: C.sky, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  historyEmoji: { fontSize: 20 },
-  historyMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
-  historyLabel: { fontSize: 14, fontWeight: '700', color: C.text },
-  historyTime: { fontSize: 11, color: C.textSoft },
-  historyNote: { fontSize: 13, color: C.textSoft, lineHeight: 18 },
+  historySection: { paddingHorizontal: 20, marginTop: 32 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 16 },
+  historyCard: { backgroundColor: Colors.white, borderRadius: 24, marginBottom: 14, ...Shadows.soft, overflow: 'hidden', flexDirection: 'row' },
+  statusLine: { width: 6 },
+  historyContent: { flex: 1, padding: 16 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  historyDate: { fontSize: 12, color: Colors.textMuted, fontWeight: '700' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  statusTextSmall: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
+  historyMain: { flexDirection: 'row', alignItems: 'center' },
+  historyEmoji: { fontSize: 28 },
+  historyMoodName: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  historyNote: { fontSize: 14, color: Colors.textMuted, marginTop: 2, lineHeight: 20, fontWeight: '500' },
 });
