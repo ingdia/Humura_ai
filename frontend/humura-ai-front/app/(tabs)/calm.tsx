@@ -153,7 +153,7 @@ export default function CalmScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('calm_title')}</Text>
-          <Text style={styles.headerSub}>{t('calm_desc')}</Text>
+          <Text style={styles.headerSub}>{language === 'en' ? 'Choose a scene and breathing technique to find your calm.' : 'Hitamo ahantu ni uburyo bwo guhumeka kugira ngo utuze.'}</Text>
           <View style={styles.titleUnderline} />
         </View>
 

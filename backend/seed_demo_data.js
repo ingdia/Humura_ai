@@ -5,7 +5,22 @@ async function seedData() {
   try {
     console.log('Seeding demo data...');
 
-    // 1. Create Professionals (Users)
+    // 1. Create Clinics
+    const clinic1 = await pool.query(`
+      INSERT INTO clinics (name, province, district, address, phone, type, latitude, longitude, is_onboarded, is_approved)
+      VALUES ('Kigali Health Clinic', 'Kigali City', 'Gasabo', 'KG 11 Ave', '0788000001', 'Private', -1.9441, 30.0619, true, true)
+      RETURNING id
+    `);
+    const clinic1Id = clinic1.rows[0].id;
+
+    const clinic2 = await pool.query(`
+      INSERT INTO clinics (name, province, district, address, phone, type, latitude, longitude, is_onboarded, is_approved)
+      VALUES ('Isange One Stop Centre', 'Kigali City', 'Nyarugenge', 'KN 2 Ave', '0788000002', 'Public', -1.9445, 30.0600, false, true)
+      RETURNING id
+    `);
+    const clinic2Id = clinic2.rows[0].id;
+
+    // 2. Create Professionals (Users)
     // Dr. Amina Uwase
     const drUwaseRes = await pool.query(`
       INSERT INTO users (name, email, password_hash, role) 
@@ -14,9 +29,9 @@ async function seedData() {
     `);
     const drUwaseId = drUwaseRes.rows[0].id;
     await pool.query(`
-      INSERT INTO psychologist_profiles (user_id, bio, specialization) 
-      VALUES ($1, 'Clinical Psychologist specializing in depression and anxiety in young women.', 'Depression, Anxiety')
-    `, [drUwaseId]);
+      INSERT INTO psychologist_profiles (user_id, clinic_id, bio, specialization) 
+      VALUES ($1, $2, 'Clinical Psychologist specializing in depression and anxiety in young women.', 'Depression, Anxiety')
+    `, [drUwaseId, clinic1Id]);
 
     // Nurse Grace Nkusi
     const nurseNkusiRes = await pool.query(`
@@ -26,9 +41,9 @@ async function seedData() {
     `);
     const nurseNkusiId = nurseNkusiRes.rows[0].id;
     await pool.query(`
-      INSERT INTO psychologist_profiles (user_id, bio, specialization) 
-      VALUES ($1, 'SRH nurse with 10 years experience in reproductive health and contraception.', 'Periods, Contraception, Reproductive Health')
-    `, [nurseNkusiId]);
+      INSERT INTO psychologist_profiles (user_id, clinic_id, bio, specialization) 
+      VALUES ($1, $2, 'SRH nurse with 10 years experience in reproductive health and contraception.', 'Periods, Contraception, Reproductive Health')
+    `, [nurseNkusiId, clinic1Id]);
 
     // Jean Mugisha
     const jeanMugishaRes = await pool.query(`
@@ -38,9 +53,9 @@ async function seedData() {
     `);
     const jeanMugishaId = jeanMugishaRes.rows[0].id;
     await pool.query(`
-      INSERT INTO psychologist_profiles (user_id, bio, specialization) 
-      VALUES ($1, 'Community Health Worker dedicated to general youth support.', 'General Youth Support')
-    `, [jeanMugishaId]);
+      INSERT INTO psychologist_profiles (user_id, clinic_id, bio, specialization) 
+      VALUES ($1, $2, 'Community Health Worker dedicated to general youth support.', 'General Youth Support')
+    `, [jeanMugishaId, clinic2Id]);
 
     // 2. Create Communities
     const anxietyComm = await pool.query(`
@@ -94,11 +109,22 @@ async function seedData() {
       VALUES ($1, 'What is Anxiety?', 'Anxiety is your body''s natural response to stress...', 1)
     `, [course1.rows[0].id]);
 
-    // 7. Seed Health Centers
+    // 8. Seed Health Centers (legacy)
     await pool.query(`
       INSERT INTO health_centers (name, type, address, note) 
       VALUES ('Kacyiru Isange One Stop Centre', 'Isange One Stop Centre', 'Kacyiru, Kigali', 'Girls aged 15+ can visit without parental consent under Rwanda''s 2025 SRH law')
     `);
+
+    // 9. Seed Direct Messages
+    await pool.query(`
+      INSERT INTO messages (sender_id, receiver_id, content, is_read) 
+      VALUES ($1, $2, 'Hello Dr. Uwase, I would like to book a session.', false)
+    `, [anonSarah.rows[0].id, drUwaseId]);
+
+    await pool.query(`
+      INSERT INTO messages (sender_id, receiver_id, content, is_read) 
+      VALUES ($1, $2, 'Hi, I received your message. I am available tomorrow at 10 AM.', false)
+    `, [drUwaseId, anonSarah.rows[0].id]);
 
     console.log('Demo data seeded successfully!');
   } catch (error) {

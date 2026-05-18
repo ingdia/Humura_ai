@@ -51,6 +51,12 @@ app.use('/api/escalate', escalateRoutes);
 const uploadRoutes = require('./routes/uploadRoutes');
 app.use('/api/uploads', uploadRoutes);
 
+const messagesRoutes = require('./routes/messagesRoutes');
+app.use('/api/messages', messagesRoutes);
+
+const clinicsRoutes = require('./routes/clinicsRoutes');
+app.use('/api/clinics', clinicsRoutes);
+
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

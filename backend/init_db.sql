@@ -1,4 +1,6 @@
 -- Reset Schema
+DROP TABLE IF EXISTS clinics CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS calm_sessions CASCADE;
 DROP TABLE IF EXISTS mood_logs CASCADE;
 DROP TABLE IF EXISTS health_centers CASCADE;
@@ -25,9 +27,26 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Clinics Table
+CREATE TABLE IF NOT EXISTS clinics (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    province VARCHAR(100),
+    district VARCHAR(100),
+    address TEXT,
+    phone VARCHAR(50),
+    type VARCHAR(100),
+    latitude DECIMAL,
+    longitude DECIMAL,
+    is_onboarded BOOLEAN DEFAULT FALSE,
+    is_approved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create Psychologist Profiles Table
 CREATE TABLE IF NOT EXISTS psychologist_profiles (
     user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    clinic_id INTEGER REFERENCES clinics(id) ON DELETE SET NULL,
     bio TEXT,
     specialization VARCHAR(255),
     hourly_rate DECIMAL(10, 2),
@@ -52,6 +71,16 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     sender VARCHAR(50) NOT NULL, -- USER, AI
     message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Direct Messages Table
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

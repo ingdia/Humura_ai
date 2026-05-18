@@ -100,6 +100,10 @@ export default function HomeScreen() {
                   <Text style={styles.langText}>{language === 'en' ? 'KN' : 'EN'}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(tabs)/profile')}>
+                  <Ionicons name="mail" size={17} color={Colors.primary} />
+                  <View style={styles.redDot} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(tabs)/profile')}>
                   <Ionicons name="person" size={17} color={Colors.primary} />
                 </TouchableOpacity>
               </View>
@@ -214,6 +218,7 @@ const styles = StyleSheet.create({
   langToggle: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
   langText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   profileBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  redDot: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: '#E74C3C', borderWidth: 1, borderColor: '#fff' },
   heroGreeting: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: '500', marginBottom: 4 },
   heroTitle: { fontSize: 30, fontWeight: '900', color: '#fff', marginBottom: 20, lineHeight: 36 },
   heroBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', alignSelf: 'flex-start', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 30, ...Shadows.premium },

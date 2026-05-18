@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, SafeAreaView, StatusBar, Switch,
-  Linking, Alert, Modal, TextInput, KeyboardAvoidingView, Platform,
+  Linking, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Image
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -11,6 +12,18 @@ import { Colors, Shadows } from '../../src/constants/theme';
 import { useLanguage } from '../../src/contexts/LanguageContext';
 
 type Slot = { time: string; available: boolean };
+
+type Specialist = {
+  id: string;
+  name: string;
+  role: string;
+  roleLabel: string;
+  roleLabelK: string;
+  icon: string;
+  color: string;
+  phone: string;
+  slots?: Slot[];
+};
 
 const SPECIALISTS: Specialist[] = [
   {
@@ -56,6 +69,7 @@ const SPECIALISTS: Specialist[] = [
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { t, language, setLanguage } = useLanguage();
+  const router = useRouter();
   const [notifications, setNotifications]   = useState(true);
   const [anonymous, setAnonymous]           = useState(true);
   
@@ -72,6 +86,11 @@ export default function ProfileScreen() {
     { label: language === 'en' ? 'Days Active' : 'Iminsi',   value: '14',  icon: 'calendar',  color: '#4CAF50' },
     { label: language === 'en' ? 'Resources Read' : 'Amakuru', value: '23',  icon: 'book', color: Colors.primary },
     { label: language === 'en' ? 'Safe Discussions' : 'Ibiganiro', value: '12',   icon: 'chatbubbles', color: '#27AE60' },
+  ];
+
+  const CONVERSATIONS = [
+    { id: '1', name: 'Dr. Amina Uwase', role: 'Clinical Psychologist', lastMessage: 'I am here for you.', time: '10:06 AM', unread: 0, photo: 'https://images.unsplash.com/photo-1594824432258-29367468817d?auto=format&fit=crop&w=200&q=80' },
+    { id: '2', name: 'Nurse Grace Nkusi', role: 'SRH Nurse', lastMessage: 'Please come by the clinic tomorrow.', time: 'Yesterday', unread: 2, photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=200&q=80' },
   ];
 
   const handleAction = (type: 'message' | 'call' | 'book', spec: Specialist) => {
@@ -263,6 +282,31 @@ export default function ProfileScreen() {
           ))}
         </View>
 
+        {/* Messages Inbox */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{language === 'en' ? 'My Messages' : 'Ubutumwa bwanjye'}</Text>
+          <Text style={styles.sectionSub}>{language === 'en' ? 'Your private conversations' : 'Ibiganiro byawe bwite'}</Text>
+
+          {CONVERSATIONS.map(conv => (
+            <TouchableOpacity key={conv.id} style={styles.convRow} onPress={() => router.push(`/thread/${conv.id}` as any)}>
+              <Image source={{ uri: conv.photo }} style={styles.convPhoto} />
+              <View style={styles.convInfo}>
+                <View style={styles.convHeader}>
+                  <Text style={styles.convName}>{conv.name}</Text>
+                  <Text style={[styles.convTime, conv.unread > 0 && { color: Colors.primary, fontWeight: '800' }]}>{conv.time}</Text>
+                </View>
+                <Text style={styles.convRole}>{conv.role}</Text>
+                <Text style={[styles.convLastMessage, conv.unread > 0 && { fontWeight: '700', color: Colors.text }]} numberOfLines={1}>{conv.lastMessage}</Text>
+              </View>
+              {conv.unread > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>{conv.unread}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Professional Support Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{language === 'en' ? 'Professional Support' : 'Ubufasha bw’inzobere'}</Text>
@@ -445,4 +489,15 @@ const styles = StyleSheet.create({
   msgInputRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#fff' },
   msgInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: Colors.text, maxHeight: 120 },
   sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', ...Shadows.soft },
+
+  convRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', gap: 12 },
+  convPhoto: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#E2E8F0' },
+  convInfo: { flex: 1, justifyContent: 'center' },
+  convHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  convName: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  convTime: { fontSize: 11, color: Colors.textMuted },
+  convRole: { fontSize: 12, color: Colors.primary, fontWeight: '600', marginBottom: 2 },
+  convLastMessage: { fontSize: 13, color: Colors.textMuted },
+  unreadBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
+  unreadText: { color: '#fff', fontSize: 10, fontWeight: '900' },
 });

@@ -20,7 +20,7 @@ const GROUPS = [
     descK: 'Ahantu hizewe ho kuvuga ikiri kumutima utagishijwe isoni.', 
     icon: 'mic', 
     color: '#4a90e2',
-    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '2', 
@@ -30,7 +30,7 @@ const GROUPS = [
     descK: 'Soma ku muryango, amategeko n’uburenganzira bwawe.', 
     icon: 'shield-checkmark', 
     color: '#E74C3C',
-    image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1531123897727-8f129e1bf98c?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '3', 
@@ -40,7 +40,7 @@ const GROUPS = [
     descK: 'Urukundo n’ubujyanama ku bangavu babyaye.', 
     icon: 'heart', 
     color: '#27AE60',
-    image: 'https://images.unsplash.com/photo-1551030173-122adabc44f9?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1509909756405-be01998816c5?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '4', 
@@ -50,7 +50,7 @@ const GROUPS = [
     descK: 'Gusobanukirwa uburyo bwo kwirinda inda zitateganyijwe.', 
     icon: 'shield', 
     color: '#8E44AD',
-    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '5', 
@@ -60,7 +60,7 @@ const GROUPS = [
     descK: 'Ubufasha ku bangavu babyaye bifuza gusubira mu ishuri.', 
     icon: 'book', 
     color: '#F39C12',
-    image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '6', 
@@ -70,7 +70,7 @@ const GROUPS = [
     descK: 'Kwiga imyuga nko kudoda, gusuka, n’ibindi bibyara inyungu.', 
     icon: 'construct', 
     color: '#16A085',
-    image: 'https://images.unsplash.com/photo-1520004434532-668416a0c78d?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '7', 
@@ -80,7 +80,7 @@ const GROUPS = [
     descK: 'Guhuza n’inzobere mu mategeko n’ubuvuzi.', 
     icon: 'medkit', 
     color: '#C0392B',
-    image: 'https://images.unsplash.com/photo-1538108176641-f23e42537f54?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1584432810601-6c7f27d2362b?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '8', 
@@ -90,14 +90,14 @@ const GROUPS = [
     descK: 'Ubufasha n’inama bitangwa n’abakobwa b’inararibonye.', 
     icon: 'people-circle', 
     color: '#D35400',
-    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=80'
   },
 ];
 
 const MOCK_POSTS: Record<string, any[]> = {
   '1': [
     { id: 'p1', author: 'Anonymous', time: '2h ago', content: 'I finally spoke to my mentor today. It feels lighter.', contentK: 'Uyu munsi navuganye n’umujyanama wanjye. Numva nuhutse.', likes: 15 },
-    { id: 'p2', author: 'Anonymous', time: '5h ago', content: 'Don’t let shame hold you back. We are here.', contentK: 'Isoni ntizigufate mpiri. Turi kumwe.', likes: 22 },
+    { id: 'p2', author: 'Anonymous', time: '5h ago', content: 'Don’t let shame hold you back. We are here.', contentK: 'Isoni ntizigufate mpiri. Turi kumwe.', likes: 22, specialistReply: { author: 'Nurse Grace Nkusi', clinic: 'Kigali Health Clinic', content: 'We are very proud of you for speaking out!' } },
   ],
   '3': [
     { id: 'p3', author: 'Anonymous', time: '1h ago', content: 'My baby is growing healthy thanks to Isange support.', contentK: 'Umwana wanjye araakura neza kubera ubufasha bwa Isange.', likes: 30 },
@@ -126,6 +126,16 @@ export default function FeedScreen() {
             </View>
           </View>
           <Text style={styles.postContent}>{language === 'en' ? item.content : item.contentK}</Text>
+          {item.specialistReply && (
+            <View style={{ marginTop: 12, padding: 12, backgroundColor: '#F8FAFC', borderRadius: 12, borderLeftWidth: 4, borderLeftColor: Colors.primary }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Ionicons name="checkmark-circle" size={16} color={Colors.primary} />
+                <Text style={{ fontSize: 12, fontWeight: '800', color: Colors.primary, marginLeft: 4 }}>{item.specialistReply.author}</Text>
+                <Text style={{ fontSize: 11, color: Colors.textMuted, marginLeft: 6 }}>Verified from {item.specialistReply.clinic}</Text>
+              </View>
+              <Text style={{ fontSize: 14, color: Colors.text }}>{item.specialistReply.content}</Text>
+            </View>
+          )}
           <View style={styles.postActions}>
             <View style={styles.actionItem}><Ionicons name="heart-outline" size={18} color={Colors.textMuted} /><Text style={styles.actionText}>{item.likes}</Text></View>
             <View style={styles.actionItem}><Ionicons name="chatbubble-outline" size={18} color={Colors.textMuted} /><Text style={styles.actionText}>{language === 'en' ? 'Reply' : 'Subiza'}</Text></View>
