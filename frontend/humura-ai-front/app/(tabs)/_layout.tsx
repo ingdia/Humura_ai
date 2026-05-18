@@ -8,9 +8,9 @@ import { Colors, Shadows } from '../../src/constants/theme';
 const TABS = [
   { name: 'index', icon: 'home-outline', iconActive: 'home' },
   { name: 'feed', icon: 'people-outline', iconActive: 'people' },
-  { name: 'calm', icon: 'leaf-outline', iconActive: 'leaf' },
+  { name: 'calm', icon: 'compass-outline', iconActive: 'compass' },
   { name: 'resources', icon: 'book-outline', iconActive: 'book' },
-  { name: 'mood', icon: 'analytics-outline', iconActive: 'analytics' },
+  { name: 'mood', icon: 'calendar-outline', iconActive: 'calendar' },
   { name: 'profile', icon: 'person-outline', iconActive: 'person' },
 ];
 
@@ -59,9 +59,9 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index"     options={{ title: 'Home' }} />
       <Tabs.Screen name="feed"      options={{ title: 'Community' }} />
-      <Tabs.Screen name="calm"      options={{ title: 'Calm' }} />
+      <Tabs.Screen name="calm"      options={{ title: '360 Support' }} />
       <Tabs.Screen name="resources" options={{ title: 'Library' }} />
-      <Tabs.Screen name="mood"      options={{ title: 'Mood' }} />
+      <Tabs.Screen name="mood"      options={{ title: 'Clinics' }} />
       <Tabs.Screen name="profile"   options={{ title: 'Profile' }} />
     </Tabs>
   );

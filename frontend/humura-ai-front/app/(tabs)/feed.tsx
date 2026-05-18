@@ -44,13 +44,13 @@ const GROUPS = [
   },
   { 
     id: '4', 
-    name: 'Mental Wellness', 
-    nameK: 'Ubuzima bwo mu mutwe', 
-    desc: 'Healing together from loss and stress.', 
-    descK: 'Ubufasha bwo kurenga imibabaro n’agahinda.', 
-    icon: 'leaf', 
+    name: 'Safe Protection', 
+    nameK: 'Kwirinda Inda', 
+    desc: 'Understanding contraception and safe choices.', 
+    descK: 'Gusobanukirwa uburyo bwo kwirinda inda zitateganyijwe.', 
+    icon: 'shield', 
     color: '#8E44AD',
-    image: 'https://images.unsplash.com/photo-1527137342181-19aab11a8ee1?auto=format&fit=crop&w=800&q=80'
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80'
   },
   { 
     id: '5', 

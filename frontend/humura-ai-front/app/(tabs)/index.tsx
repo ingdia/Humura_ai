@@ -12,10 +12,10 @@ import { useLanguage } from '../../src/contexts/LanguageContext';
 const { width } = Dimensions.get('window');
 
 const QUOTES = [
-  'Healing takes time, and asking for help is a courageous step.',
-  'You are not alone. Millions walk this path with you.',
-  "There is hope, even when your brain tells you there isn't.",
-  'Umuntu ngumuntu ngabantu — a person is a person through other people.',
+  'Knowledge is power. Understanding your body is the first step.',
+  'You are not alone. A safe community is here for you.',
+  'Your privacy is our priority. Speak your truth safely.',
+  'Umuntu ngumuntu ngabantu — we are stronger together.',
 ];
 
 export default function HomeScreen() {
@@ -33,20 +33,20 @@ export default function HomeScreen() {
 
   const FEATURES = [
     { 
+      tab: '/(tabs)/profile', 
+      icon: 'chatbubbles', 
+      title: t('talk_specialist'), 
+      desc: 'Talk to a nurse.', 
+      colors: [Colors.primary, Colors.secondary] as [string, string], 
+      badge: 'Private',
+    },
+    { 
       tab: '/(tabs)/feed', 
       icon: 'people', 
       title: t('community_title'), 
       desc: t('community_desc'), 
-      colors: [Colors.primary, Colors.secondary] as [string, string], 
-      badge: '47 today' 
-    },
-    { 
-      tab: '/(tabs)/calm', 
-      icon: 'leaf', 
-      title: t('calm_title'), 
-      desc: t('calm_desc'), 
       colors: [Colors.white, '#F1F5F9'] as [string, string], 
-      badge: 'NEW',
+      badge: 'Active',
       isGrey: true
     },
     { 
@@ -55,16 +55,17 @@ export default function HomeScreen() {
       title: t('resources_title'), 
       desc: t('resources_desc'), 
       colors: [Colors.white, '#F1F5F9'] as [string, string], 
-      badge: 'Safe',
+      badge: 'Library',
       isGrey: true
     },
     { 
-      tab: '/(tabs)/mood', 
-      icon: 'analytics', 
-      title: t('mood_title'), 
-      desc: t('mood_desc'), 
-      colors: [Colors.primary, Colors.secondary] as [string, string], 
-      badge: '5🔥'
+      tab: '/(tabs)/calm', 
+      icon: 'compass', 
+      title: t('calm_title'), 
+      desc: 'Holistic support tools.', 
+      colors: [Colors.white, '#F1F5F9'] as [string, string], 
+      badge: '360',
+      isGrey: true
     },
   ];
 
@@ -125,29 +126,39 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('wellness_tools')}</Text>
           <View style={styles.grid}>
-            {FEATURES.map((f, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[styles.featureCard, f.isGrey && styles.featureCardGrey]}
-                activeOpacity={0.87}
-                onPress={() => router.push(f.tab as any)}
-              >
+            {FEATURES.map((f, i) => {
+              const CardContent = (
                 <LinearGradient colors={f.colors} style={styles.featureGrad}>
                   <View style={styles.featureTop}>
-                    <View style={[styles.featureIcon, f.isGrey && { backgroundColor: 'rgba(74,144,226,0.1)' }]}>
-                      <Ionicons name={f.icon as any} size={20} color={f.isGrey ? Colors.primary : "#fff"} />
+                    <View style={[styles.featureIcon, (f.isGrey || f.bgImage) && { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+                      <Ionicons name={f.icon as any} size={20} color={(f.isGrey && !f.bgImage) ? Colors.primary : "#fff"} />
                     </View>
-                    <Text style={[styles.featureBadge, f.isGrey && { color: Colors.primary, backgroundColor: 'rgba(74,144,226,0.1)' }]}>
+                    <Text style={[styles.featureBadge, (f.isGrey || f.bgImage) && { color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                       {f.badge}
                     </Text>
                   </View>
                   <View>
-                    <Text style={[styles.featureTitle, f.isGrey && { color: Colors.text }]}>{f.title}</Text>
-                    <Text style={[styles.featureDesc, f.isGrey && { color: Colors.textMuted }]}>{f.desc}</Text>
+                    <Text style={[styles.featureTitle, (f.isGrey && !f.bgImage) && { color: Colors.text }]}>{f.title}</Text>
+                    <Text style={[styles.featureDesc, (f.isGrey && !f.bgImage) && { color: Colors.textMuted }]}>{f.desc}</Text>
                   </View>
                 </LinearGradient>
-              </TouchableOpacity>
-            ))}
+              );
+
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.featureCard, f.isGrey && !f.bgImage && styles.featureCardGrey]}
+                  activeOpacity={0.87}
+                  onPress={() => router.push(f.tab as any)}
+                >
+                  {f.bgImage ? (
+                    <ImageBackground source={{ uri: f.bgImage }} style={{ flex: 1 }}>
+                      {CardContent}
+                    </ImageBackground>
+                  ) : CardContent}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 

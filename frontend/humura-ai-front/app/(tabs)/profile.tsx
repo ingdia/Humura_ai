@@ -12,25 +12,13 @@ import { useLanguage } from '../../src/contexts/LanguageContext';
 
 type Slot = { time: string; available: boolean };
 
-type Specialist = {
-  id: string;
-  name: string;
-  role: 'psychologist' | 'social_worker' | 'peer_support';
-  roleLabel: string;
-  roleLabelK: string;
-  icon: string;
-  color: string;
-  phone: string;
-  slots?: Slot[];
-};
-
 const SPECIALISTS: Specialist[] = [
   {
     id: '1',
     name: 'Dr. Amina Uwase',
-    role: 'psychologist',
-    roleLabel: 'Psychologist',
-    roleLabelK: 'Umusinganyandwara',
+    role: 'srh_specialist',
+    roleLabel: 'SRH Specialist',
+    roleLabelK: 'Inzobere muri SRH',
     icon: 'heart',
     color: '#4a90e2',
     phone: '+250 788 123 456',
@@ -43,15 +31,15 @@ const SPECIALISTS: Specialist[] = [
     id: '2',
     name: 'Nurse Grace Nkusi',
     role: 'social_worker',
-    roleLabel: 'Social Worker',
-    roleLabelK: 'Umukozi mbonezamubano',
+    roleLabel: 'SRH Counselor',
+    roleLabelK: 'Umujyanama muri SRH',
     icon: 'medical',
     color: '#27AE60',
     phone: '+250 788 654 321',
   },
   {
     id: '3',
-    name: 'Brother Keza',
+    name: 'Keza',
     role: 'peer_support',
     roleLabel: 'Peer Support',
     roleLabelK: 'Ubufasha bwa bagenzi bawe',
@@ -82,8 +70,8 @@ export default function ProfileScreen() {
 
   const STATS = [
     { label: language === 'en' ? 'Days Active' : 'Iminsi',   value: '14',  icon: 'calendar',  color: '#4CAF50' },
-    { label: t('mood_title'),     value: '11',  icon: 'analytics', color: Colors.primary },
-    { label: t('calm_title'), value: '6',   icon: 'leaf',      color: '#27AE60' },
+    { label: language === 'en' ? 'Resources Read' : 'Amakuru', value: '23',  icon: 'book', color: Colors.primary },
+    { label: language === 'en' ? 'Safe Discussions' : 'Ibiganiro', value: '12',   icon: 'chatbubbles', color: '#27AE60' },
   ];
 
   const handleAction = (type: 'message' | 'call' | 'book', spec: Specialist) => {
@@ -313,6 +301,39 @@ export default function ProfileScreen() {
           ))}
         </View>
 
+        {/* Nearby Clinics Preview */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>{language === 'en' ? 'Nearby Services' : 'Amavuriro akwegereye'}</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/mood' as any)}>
+              <Text style={styles.viewAllLink}>{language === 'en' ? 'View All' : 'Reba yose'}</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.sectionSub}>{language === 'en' ? 'Safe locations near your current area.' : 'Ahantu hizewe hakwegereye.'}</Text>
+          
+          <TouchableOpacity style={styles.miniClinicCard} onPress={() => Linking.openURL('https://www.google.com/maps/search/?api=1&query=Isange+One+Stop+Centre+Kacyiru')}>
+            <View style={[styles.miniClinicIcon, { backgroundColor: '#E74C3C15' }]}>
+              <Ionicons name="shield-checkmark" size={20} color="#E74C3C" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.miniClinicName}>Isange Centre - Kacyiru</Text>
+              <Text style={styles.miniClinicDist}>2.4 km away</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.miniClinicCard} onPress={() => Linking.openURL('https://www.google.com/maps/search/?api=1&query=Kimisagara+Youth+Friendly+Center')}>
+            <View style={[styles.miniClinicIcon, { backgroundColor: '#4a90e215' }]}>
+              <Ionicons name="people" size={20} color="#4a90e2" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.miniClinicName}>Youth Center - Kimisagara</Text>
+              <Text style={styles.miniClinicDist}>3.1 km away</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
         {/* Account Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{language === 'en' ? 'Account Settings' : 'Igenamiterere rya konti'}</Text>
@@ -396,6 +417,13 @@ const styles = StyleSheet.create({
   
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, paddingVertical: 14, backgroundColor: '#FFF5F5', borderRadius: 16, gap: 10 },
   logoutText: { color: '#F44336', fontWeight: '800', fontSize: 15 },
+
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  viewAllLink: { fontSize: 12, color: Colors.primary, fontWeight: '800' },
+  miniClinicCard: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16, backgroundColor: '#F8FAFC', padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9' },
+  miniClinicIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  miniClinicName: { fontSize: 14, fontWeight: '800', color: Colors.text },
+  miniClinicDist: { fontSize: 11, color: Colors.textMuted, fontWeight: '700', marginTop: 2 },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: Colors.white, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },

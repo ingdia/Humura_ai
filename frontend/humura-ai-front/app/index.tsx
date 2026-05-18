@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../src/contexts/AuthContext';
 import { Colors } from '../src/constants/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -89,7 +90,15 @@ export default function SplashScreen() {
       if (isAuthenticated) {
         router.replace('/(tabs)');
       } else {
-        router.replace('/(auth)/login');
+        const checkOnboarding = async () => {
+          const seen = await AsyncStorage.getItem('hasSeenOnboarding');
+          if (seen === 'true') {
+            router.replace('/(auth)/login');
+          } else {
+            router.replace('/(onboarding)');
+          }
+        };
+        checkOnboarding();
       }
     });
   }, [isLoading, isAuthenticated]);
@@ -158,7 +167,7 @@ export default function SplashScreen() {
       </Animated.View>
 
       <View style={styles.bottom}>
-        <Text style={styles.bottomText}>Mental Health Innovation · Rwanda 2025</Text>
+        <Text style={styles.bottomText}>SRH Innovation · Rwanda 2025</Text>
         <View style={styles.bottomLine} />
         <Text style={styles.bottomSub}>Bonae Ineza & Diane Ingabire</Text>
       </View>
