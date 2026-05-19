@@ -119,6 +119,10 @@ export default function LoginScreen() {
                   <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/(auth)/signup')}>
                     <Text style={styles.linkText}>Have an account? <Text style={styles.linkHighlight}>Log in</Text></Text>
                   </TouchableOpacity>
+
+                  <TouchableOpacity style={{marginTop: 15, alignItems: 'center'}} onPress={() => router.replace('/(professional-tabs)')}>
+                    <Text style={{color: '#60A5FA', fontWeight: 'bold', fontSize: 13}}>Doctor Portal (Test UI)</Text>
+                  </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.idFlow}>
