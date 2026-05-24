@@ -31,7 +31,16 @@ export default function HomeScreen() {
 
   const quote = QUOTES[new Date().getDay() % QUOTES.length];
 
-  const FEATURES = [
+  const FEATURES: Array<{
+    tab: string;
+    icon: string;
+    title: string;
+    desc: string;
+    colors: [string, string];
+    badge: string;
+    isGrey?: boolean;
+    bgImage?: string;
+  }> = [
     { 
       tab: '/(tabs)/profile', 
       icon: 'chatbubbles', 

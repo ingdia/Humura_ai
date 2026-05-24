@@ -1,140 +1,292 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch, TextInput } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  SafeAreaView, Switch, TextInput, Alert, StatusBar
+} from 'react-native';
 import { Colors, Spacing, Border, Shadows } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useProfessional, AvailabilityMatrix } from '../../src/contexts/ProfessionalContext';
+import { useAuth } from '../../src/contexts/AuthContext';
+
 
 export default function ProfessionalProfile() {
   const router = useRouter();
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [acceptingPatients, setAcceptingPatients] = useState(true);
+  const { logout } = useAuth();
+  const { 
+    profile, 
+    updateProfile, 
+    availability, 
+    toggleAvailabilityDay, 
+    updateAvailabilityHours 
+  } = useProfessional();
 
-  // Sample availability state
-  const [availability, setAvailability] = useState({
-    Monday: { enabled: true, hours: '09:00 - 17:00' },
-    Tuesday: { enabled: true, hours: '09:00 - 17:00' },
-    Wednesday: { enabled: false, hours: 'Off' },
-    Thursday: { enabled: true, hours: '10:00 - 14:00' },
-    Friday: { enabled: true, hours: '09:00 - 13:00' },
-  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(profile.name);
+  const [editedSpecialty, setEditedSpecialty] = useState(profile.specialization);
+  const [editedBio, setEditedBio] = useState(profile.bio);
+  const [editedClinic, setEditedClinic] = useState(profile.clinic);
+  const [editedRate, setEditedRate] = useState(profile.rate);
 
-  const toggleDay = (day: keyof typeof availability) => {
-    setAvailability(prev => ({
-      ...prev,
-      [day]: { ...prev[day], enabled: !prev[day].enabled }
-    }));
+  // Availability matrices keys
+  const weekdays: (keyof AvailabilityMatrix)[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+  const handleSaveProfile = () => {
+    if (!editedName.trim()) {
+      Alert.alert("Name Required", "Please enter your professional name.");
+      return;
+    }
+    
+    updateProfile({
+      name: editedName.trim(),
+      specialization: editedSpecialty.trim(),
+      bio: editedBio.trim(),
+      clinic: editedClinic.trim(),
+      rate: editedRate.trim(),
+    });
+    
+    setIsEditing(false);
+    Alert.alert("Profile Updated", "Your changes have been saved successfully.");
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Confirm Log Out",
+      "Are you sure you want to log out from your professional account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Log Out", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (err) {
+              // Fallback if useAuth logout encounters issues in routing
+              router.replace('/(auth)/login');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      
+      {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile & Availability</Text>
+        <View style={styles.logoRow}>
+          <View style={styles.logoIcon}>
+            <Ionicons name="person" size={18} color="#fff" />
+          </View>
+          <Text style={styles.headerTitle}>Profile & Practice</Text>
+        </View>
+        <View style={styles.titleUnderline} />
       </View>
-      <ScrollView contentContainerStyle={styles.container}>
+
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         
-        {/* Profile Setup Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>U</Text>
-            <TouchableOpacity style={styles.avatarEditBadge}>
-              <Ionicons name="camera" size={14} color={Colors.white} />
+        {/* AVATAR & BASIC DESCRIPTION */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarLetter}>{profile.name.charAt(0) || 'D'}</Text>
+            <TouchableOpacity style={styles.avatarEditBadge} activeOpacity={0.8}>
+              <Ionicons name="camera" size={13} color={Colors.white} />
             </TouchableOpacity>
           </View>
           
-          {isEditingProfile ? (
-            <View style={styles.editForm}>
-              <TextInput style={styles.input} defaultValue="Dr. Uwase" placeholder="Full Name" />
-              <TextInput style={styles.input} defaultValue="Clinical Psychologist" placeholder="Specialization" />
-              <TextInput 
-                style={[styles.input, { height: 80 }]} 
-                defaultValue="Passionate about mental well-being and CBT." 
-                placeholder="Bio" 
-                multiline 
-              />
-              <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditingProfile(false)}>
-                <Text style={styles.saveButtonText}>Save Profile</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
+          {!isEditing ? (
             <>
-              <Text style={styles.name}>Dr. Uwase</Text>
-              <Text style={styles.specialization}>Clinical Psychologist</Text>
-              <Text style={styles.bio}>Passionate about mental well-being and Cognitive Behavioral Therapy (CBT).</Text>
+              <Text style={styles.nameText}>{profile.name}</Text>
+              <Text style={styles.specialtyText}>{profile.specialization}</Text>
+              <Text style={styles.bioText}>{profile.bio}</Text>
               
-              <TouchableOpacity style={styles.editButton} onPress={() => setIsEditingProfile(true)}>
-                <Text style={styles.editButtonText}>Edit Profile</Text>
+              <TouchableOpacity 
+                style={styles.editBtn} 
+                onPress={() => setIsEditing(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create" size={16} color={Colors.primary} />
+                <Text style={styles.editBtnText}>Edit Profile</Text>
               </TouchableOpacity>
             </>
+          ) : (
+            <View style={styles.editForm}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Professional Name</Text>
+                <TextInput 
+                  style={styles.textInput}
+                  value={editedName}
+                  onChangeText={setEditedName}
+                  placeholder="e.g. Dr. Amina Uwase"
+                  placeholderTextColor={Colors.tabInactive}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Specialization</Text>
+                <TextInput 
+                  style={styles.textInput}
+                  value={editedSpecialty}
+                  onChangeText={setEditedSpecialty}
+                  placeholder="e.g. Clinical Psychologist"
+                  placeholderTextColor={Colors.tabInactive}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Professional Bio</Text>
+                <TextInput 
+                  style={[styles.textInput, styles.textArea]}
+                  value={editedBio}
+                  onChangeText={setEditedBio}
+                  placeholder="Describe your mental health approach, CBT, guidance..."
+                  placeholderTextColor={Colors.tabInactive}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
+              <View style={styles.formRow}>
+                <TouchableOpacity 
+                  style={[styles.formBtn, styles.cancelBtn]}
+                  onPress={() => {
+                    setEditedName(profile.name);
+                    setEditedSpecialty(profile.specialization);
+                    setEditedBio(profile.bio);
+                    setEditedClinic(profile.clinic);
+                    setEditedRate(profile.rate);
+                    setIsEditing(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.formBtn, styles.saveBtn]}
+                  onPress={handleSaveProfile}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.saveBtnText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
         </View>
 
-        {/* Practice Details */}
+        {/* PRACTICE DETAILS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Practice Details</Text>
+          <Text style={styles.sectionTitle}>Practice Settings</Text>
           <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="medical-outline" size={22} color={Colors.textMuted} />
-                <Text style={styles.rowText}>Clinic Affiliation</Text>
+            {isEditing ? (
+              <View style={{ padding: Spacing.md }}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Clinic Affiliation</Text>
+                  <TextInput 
+                    style={styles.textInput}
+                    value={editedClinic}
+                    onChangeText={setEditedClinic}
+                    placeholder="e.g. Kigali Mental Health Center"
+                    placeholderTextColor={Colors.tabInactive}
+                  />
+                </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Hourly Therapy Rate</Text>
+                  <TextInput 
+                    style={styles.textInput}
+                    value={editedRate}
+                    onChangeText={setEditedRate}
+                    placeholder="e.g. 25,000 RWF"
+                    placeholderTextColor={Colors.tabInactive}
+                  />
+                </View>
               </View>
-              <Text style={styles.rowValue}>Kigali Mental Health</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="cash-outline" size={22} color={Colors.textMuted} />
-                <Text style={styles.rowText}>Hourly Rate</Text>
-              </View>
-              <Text style={styles.rowValue}>25,000 RWF</Text>
-            </View>
+            ) : (
+              <>
+                <View style={styles.cardRow}>
+                  <View style={styles.cardRowLeft}>
+                    <Ionicons name="business" size={20} color={Colors.tabInactive} />
+                    <Text style={styles.cardRowLabel}>Clinic Affiliation</Text>
+                  </View>
+                  <Text style={styles.cardRowValue}>{profile.clinic}</Text>
+                </View>
+                <View style={styles.cardDivider} />
+                <View style={styles.cardRow}>
+                  <View style={styles.cardRowLeft}>
+                    <Ionicons name="cash" size={20} color={Colors.tabInactive} />
+                    <Text style={styles.cardRowLabel}>Hourly Therapy Rate</Text>
+                  </View>
+                  <Text style={styles.cardRowValue}>{profile.rate}</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
-        {/* Shared Availability Matrix */}
+        {/* AVAILABILITY SCHEDULER MATRIX */}
         <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Share Availability</Text>
-            <Switch 
-              value={acceptingPatients} 
-              onValueChange={setAcceptingPatients} 
-              trackColor={{ true: Colors.primary }} 
-            />
-          </View>
-          <Text style={styles.helperText}>Set your weekly schedule so patients can book sessions.</Text>
+          <Text style={styles.sectionTitle}>Weekly Availability</Text>
+          <Text style={styles.sectionHelperText}>Set active work hours for student/patient calendar bookings.</Text>
           
           <View style={styles.card}>
-            {Object.keys(availability).map((day, index) => {
-              const dayKey = day as keyof typeof availability;
-              const { enabled, hours } = availability[dayKey];
+            {weekdays.map((day, index) => {
+              const daySchedule = availability[day];
               return (
                 <View key={day}>
                   <View style={styles.availabilityRow}>
-                    <TouchableOpacity style={styles.dayToggle} onPress={() => toggleDay(dayKey)}>
+                    <TouchableOpacity 
+                      style={styles.daySelection}
+                      onPress={() => toggleAvailabilityDay(day)}
+                      activeOpacity={0.7}
+                    >
                       <Ionicons 
-                        name={enabled ? "checkmark-circle" : "ellipse-outline"} 
+                        name={daySchedule.enabled ? "checkmark-circle" : "ellipse-outline"} 
                         size={22} 
-                        color={enabled ? Colors.positive : Colors.textMuted} 
+                        color={daySchedule.enabled ? Colors.positive : Colors.tabInactive} 
                       />
-                      <Text style={[styles.dayText, !enabled && { color: Colors.textMuted }]}>{day}</Text>
-                    </TouchableOpacity>
-                    <View style={styles.hoursBox}>
-                      <Text style={[styles.hoursText, !enabled && { color: Colors.textMuted }]}>
-                        {enabled ? hours : 'Unavailable'}
+                      <Text style={[styles.dayNameText, !daySchedule.enabled && { color: Colors.tabInactive }]}>
+                        {day}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
+
+                    {daySchedule.enabled ? (
+                      <View style={styles.hoursBox}>
+                        <TextInput 
+                          style={styles.hoursInput}
+                          value={daySchedule.hours}
+                          onChangeText={(text) => updateAvailabilityHours(day, text)}
+                          placeholder="09:00 - 17:00"
+                          placeholderTextColor={Colors.tabInactive}
+                        />
+                        <Ionicons name="pencil-sharp" size={10} color={Colors.primary} />
+                      </View>
+                    ) : (
+                      <View style={[styles.hoursBox, { backgroundColor: '#F3F6FA', borderColor: '#E5E9F0' }]}>
+                        <Text style={styles.hoursOfflineText}>Unavailable</Text>
+                      </View>
+                    )}
                   </View>
-                  {index < Object.keys(availability).length - 1 && <View style={styles.divider} />}
+                  {index < weekdays.length - 1 && <View style={styles.cardDivider} />}
                 </View>
               );
             })}
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => router.replace('/(auth)')}>
-          <Ionicons name="log-out-outline" size={20} color="#F44336" />
-          <Text style={styles.logoutText}>Log Out</Text>
+        {/* LOGOUT BUTTON */}
+        <TouchableOpacity 
+          style={styles.logoutBtn} 
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="log-out" size={20} color="#F44336" />
+          <Text style={styles.logoutText}>End Professional Session</Text>
         </TouchableOpacity>
 
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -146,44 +298,73 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.md,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
     backgroundColor: Colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    ...Shadows.soft,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#9B59B6',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '900',
     color: Colors.text,
   },
+  titleUnderline: {
+    width: 32,
+    height: 4,
+    backgroundColor: '#9B59B6',
+    borderRadius: 2,
+    marginTop: 8,
+  },
   container: {
-    padding: Spacing.lg,
-    paddingBottom: 100, 
+    padding: Spacing.md,
+    paddingBottom: 100,
   },
-  profileSection: {
+  avatarSection: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    backgroundColor: Colors.white,
+    borderRadius: Border.radiusLg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#EBF2FA',
+    ...Shadows.soft,
+    marginBottom: Spacing.md,
   },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  avatarCircle: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
     position: 'relative',
+    marginBottom: Spacing.sm,
+    borderWidth: 3,
+    borderColor: '#E8F4FD',
+    ...Shadows.soft,
   },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
+  avatarLetter: {
+    fontSize: 34,
+    fontWeight: '900',
     color: Colors.white,
   },
   avatarEditBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: -2,
+    right: -2,
     backgroundColor: Colors.secondary,
     width: 26,
     height: 26,
@@ -191,115 +372,152 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.background,
+    borderColor: Colors.white,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  nameText: {
+    fontSize: 20,
+    fontWeight: '800',
     color: Colors.text,
   },
-  specialization: {
-    fontSize: 15,
+  specialtyText: {
+    fontSize: 14,
     color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: '700',
     marginTop: 4,
   },
-  bio: {
-    fontSize: 14,
+  bioText: {
+    fontSize: 13,
     color: Colors.textMuted,
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    marginTop: 10,
+    lineHeight: 18,
+    paddingHorizontal: 8,
+    fontWeight: '500',
   },
-  editButton: {
-    paddingHorizontal: Spacing.lg,
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F4FD',
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: Border.radiusFull,
-    backgroundColor: '#E8F4FD',
+    marginTop: 14,
+    gap: 6,
   },
-  editButtonText: {
+  editBtnText: {
+    fontSize: 13,
     color: Colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   editForm: {
     width: '100%',
     marginTop: Spacing.sm,
   },
-  input: {
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: Border.radiusSm,
-    padding: Spacing.md,
+  inputGroup: {
     marginBottom: Spacing.sm,
-    fontSize: 15,
-    color: Colors.text,
   },
-  saveButton: {
-    backgroundColor: Colors.primary,
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 4,
+    marginLeft: 2,
+  },
+  textInput: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#EBF2FA',
+    borderRadius: Border.radius,
+    padding: Spacing.sm,
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '500',
+  },
+  textArea: {
+    minHeight: 70,
+    textAlignVertical: 'top',
+  },
+  formRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  formBtn: {
+    flex: 1,
     paddingVertical: 12,
     borderRadius: Border.radius,
     alignItems: 'center',
-    marginTop: Spacing.sm,
+    justifyContent: 'center',
   },
-  saveButtonText: {
+  cancelBtn: {
+    backgroundColor: '#F1F5F9',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    fontWeight: '700',
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    ...Shadows.soft,
+  },
+  saveBtnText: {
+    fontSize: 14,
     color: Colors.white,
-    fontWeight: '600',
-    fontSize: 16,
+    fontWeight: '700',
   },
   section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: Colors.text,
+    marginBottom: 8,
     marginLeft: 4,
+    letterSpacing: 0.2,
   },
-  helperText: {
-    fontSize: 13,
+  sectionHelperText: {
+    fontSize: 12,
     color: Colors.textMuted,
     marginLeft: 4,
-    marginBottom: Spacing.sm,
+    marginBottom: 10,
+    fontWeight: '500',
   },
   card: {
     backgroundColor: Colors.white,
-    borderRadius: Border.radius,
+    borderRadius: Border.radiusLg,
+    borderWidth: 1,
+    borderColor: '#EBF2FA',
     ...Shadows.soft,
     overflow: 'hidden',
   },
-  row: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: Spacing.md,
   },
-  rowLeft: {
+  cardRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
   },
-  rowText: {
-    fontSize: 16,
-    color: Colors.text,
-    marginLeft: Spacing.sm,
-  },
-  rowValue: {
+  cardRowLabel: {
     fontSize: 15,
-    color: Colors.textMuted,
-    fontWeight: '500',
+    color: Colors.text,
+    fontWeight: '600',
   },
-  divider: {
+  cardRowValue: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    fontWeight: '600',
+  },
+  cardDivider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
-    marginLeft: Spacing.md,
-    marginRight: Spacing.md,
+    backgroundColor: '#F3F6FA',
+    marginHorizontal: Spacing.md,
   },
   availabilityRow: {
     flexDirection: 'row',
@@ -307,39 +525,54 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: Spacing.md,
   },
-  dayToggle: {
+  daySelection: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.sm,
   },
-  dayText: {
-    fontSize: 16,
-    fontWeight: '500',
+  dayNameText: {
+    fontSize: 15,
+    fontWeight: '700',
     color: Colors.text,
-    marginLeft: Spacing.sm,
-    width: 90,
+    width: 80,
   },
   hoursBox: {
-    backgroundColor: '#F9FAFB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Border.radiusSm,
+    paddingVertical: 8,
+    borderRadius: Border.radius,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#EBF2FA',
+    gap: 6,
   },
-  hoursText: {
-    fontSize: 14,
+  hoursInput: {
+    fontSize: 13,
     color: Colors.text,
-    fontWeight: '500',
+    fontWeight: '600',
+    padding: 0,
+    width: 90,
+    textAlign: 'center',
+  },
+  hoursOfflineText: {
+    fontSize: 13,
+    color: Colors.tabInactive,
+    fontWeight: '700',
+    width: 90,
+    textAlign: 'center',
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    paddingVertical: 14,
+    marginTop: 10,
+    paddingVertical: 15,
     backgroundColor: '#FFF5F5',
-    borderRadius: 16,
-    gap: 10,
+    borderRadius: Border.radiusLg,
+    borderWidth: 1,
+    borderColor: '#FFE3E3',
+    gap: 8,
   },
   logoutText: {
     color: '#F44336',

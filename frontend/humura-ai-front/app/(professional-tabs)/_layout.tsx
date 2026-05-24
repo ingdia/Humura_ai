@@ -4,6 +4,7 @@ import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Colors, Shadows } from '../../src/constants/theme';
+import { ProfessionalProvider } from '../../src/contexts/ProfessionalContext';
 
 const TABS = [
   { name: 'index', icon: 'grid-outline', iconActive: 'grid' },
@@ -50,18 +51,21 @@ function ProfessionalTabBar({ state, descriptors, navigation }: BottomTabBarProp
   );
 }
 
+
 export default function ProfessionalTabLayout() {
   return (
-    <Tabs
-      tabBar={(props) => <ProfessionalTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      <Tabs.Screen name="index"        options={{ title: 'Dashboard' }} />
-      <Tabs.Screen name="appointments" options={{ title: 'Appointments' }} />
-      <Tabs.Screen name="qa"           options={{ title: 'Q&A' }} />
-      <Tabs.Screen name="inbox"        options={{ title: 'Inbox' }} />
-      <Tabs.Screen name="profile"      options={{ title: 'Profile' }} />
-    </Tabs>
+    <ProfessionalProvider>
+      <Tabs
+        tabBar={(props) => <ProfessionalTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tabs.Screen name="index"        options={{ title: 'Dashboard' }} />
+        <Tabs.Screen name="appointments" options={{ title: 'Appointments' }} />
+        <Tabs.Screen name="qa"           options={{ title: 'Q&A' }} />
+        <Tabs.Screen name="inbox"        options={{ title: 'Inbox' }} />
+        <Tabs.Screen name="profile"      options={{ title: 'Profile' }} />
+      </Tabs>
+    </ProfessionalProvider>
   );
 }
 

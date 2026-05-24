@@ -169,7 +169,7 @@ export default function SplashScreen() {
       <View style={styles.bottom}>
         <Text style={styles.bottomText}>SRH Innovation · Rwanda 2025</Text>
         <View style={styles.bottomLine} />
-        <Text style={styles.bottomSub}>Bonae Ineza & Diane Ingabire</Text>
+        <Text style={styles.bottomSub}>Bonae Ineza & Hyacient Ihimbazwe</Text>
       </View>
     </Animated.View>
   );
