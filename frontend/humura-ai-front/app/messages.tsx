@@ -2,13 +2,14 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, SectionList,
   TouchableOpacity, StatusBar, ActivityIndicator, RefreshControl,
+  Modal, ScrollView, Alert, Image,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Shadows } from '../src/constants/theme';
 import { useLanguage } from '../src/contexts/LanguageContext';
-import { messagesAPI, psychologistsAPI } from '../src/services/api';
+import { messagesAPI, psychologistsAPI, appointmentsAPI } from '../src/services/api';
 import { getSocket } from '../src/services/socket';
 import { useAuth } from '../src/contexts/AuthContext';
 
@@ -59,11 +60,17 @@ export default function MessagesScreen() {
   const { language } = useLanguage();
   const { user } = useAuth();
   const isKn = language === 'kn';
+  const isPatient = !user?.role || user?.role !== 'PSYCHOLOGIST';
 
   const [conversations, setConversations] = useState<InboxRow[]>([]);
   const [specialists, setSpecialists] = useState<Specialist[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Booking
+  const [bookingSpecialist, setBookingSpecialist] = useState<Specialist | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [booking, setBooking] = useState(false);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -117,6 +124,41 @@ export default function MessagesScreen() {
     return () => { socket.off('new_message', handleNewMsg); };
   }, [user?.id, load]);
 
+  // Generate next 3 days of morning + afternoon slots
+  const buildSlots = () => {
+    const slots: { label: string; iso: string }[] = [];
+    for (let d = 1; d <= 3; d++) {
+      const day = new Date();
+      day.setDate(day.getDate() + d);
+      const label = day.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+      for (const [h, suffix] of [[9, 'AM'], [11, 'AM'], [14, 'PM'], [16, 'PM']] as [number, string][]) {
+        day.setHours(h, 0, 0, 0);
+        slots.push({ label: `${label} · ${h <= 12 ? h : h - 12}:00 ${suffix}`, iso: day.toISOString() });
+      }
+    }
+    return slots;
+  };
+
+  const handleBook = async () => {
+    if (!bookingSpecialist || !selectedSlot) return;
+    setBooking(true);
+    try {
+      await appointmentsAPI.book(bookingSpecialist.id, selectedSlot);
+      setBookingSpecialist(null);
+      setSelectedSlot(null);
+      Alert.alert(
+        isKn ? 'Ibisabwa byoherejwe!' : 'Request Sent!',
+        isKn
+          ? `Ubusabe bwawe bwa ${bookingSpecialist.name} bwakiriwe. Azakwemeza vuba.`
+          : `Your booking request with ${bookingSpecialist.name} has been sent. They will confirm shortly.`
+      );
+    } catch {
+      Alert.alert(isKn ? 'Byanze' : 'Failed', isKn ? 'Ongera ugerageze.' : 'Could not send request. Try again.');
+    } finally {
+      setBooking(false);
+    }
+  };
+
   const openThread = (userId: number, name: string, role: string) => {
     router.push(`/thread/${userId}?name=${encodeURIComponent(name)}&role=${encodeURIComponent(role)}` as any);
   };
@@ -127,14 +169,19 @@ export default function MessagesScreen() {
     const color = colorFor(item.specialization);
     const initials = item.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return (
-      <TouchableOpacity
-        style={styles.specCard}
-        activeOpacity={0.85}
-        onPress={() => openThread(item.id, item.name, item.specialization)}
-      >
-        <View style={[styles.specAvatar, { backgroundColor: color + '20', borderColor: color + '40' }]}>
-          <Text style={[styles.specInitials, { color }]}>{initials}</Text>
-        </View>
+      <View style={styles.specCard}>
+        {/* Avatar / photo */}
+        {item.profile_picture_url ? (
+          <Image
+            source={{ uri: item.profile_picture_url }}
+            style={[styles.specAvatar, styles.specAvatarImg]}
+          />
+        ) : (
+          <View style={[styles.specAvatar, { backgroundColor: color + '20', borderColor: color + '40' }]}>
+            <Text style={[styles.specInitials, { color }]}>{initials}</Text>
+          </View>
+        )}
+
         <View style={styles.specBody}>
           <View style={styles.specNameRow}>
             <Text style={styles.specName}>{item.name}</Text>
@@ -151,25 +198,23 @@ export default function MessagesScreen() {
           {item.bio ? (
             <Text style={styles.specBio} numberOfLines={2}>{item.bio}</Text>
           ) : null}
-          <View style={styles.specFooter}>
-            <View style={styles.specMeta}>
-              <Ionicons name="business-outline" size={11} color={Colors.textMuted} />
-              <Text style={styles.specMetaText}>
-                {isKn ? 'Ikigo Ndangamuntu cya Kigali' : 'Kigali Mental Health Center'}
-              </Text>
-            </View>
-            {item.hourly_rate ? (
-              <View style={styles.specMeta}>
-                <Ionicons name="card-outline" size={11} color={Colors.textMuted} />
-                <Text style={styles.specMetaText}>{item.hourly_rate}</Text>
-              </View>
-            ) : null}
-          </View>
         </View>
-        <View style={styles.chatBtn}>
-          <Ionicons name="chatbubble" size={18} color="#fff" />
+
+        <View style={styles.specActions}>
+          <TouchableOpacity
+            style={styles.bookBtn}
+            onPress={() => { setBookingSpecialist(item); setSelectedSlot(null); }}
+          >
+            <Ionicons name="calendar-outline" size={15} color={Colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.chatBtn}
+            onPress={() => openThread(item.id, item.name, item.specialization)}
+          >
+            <Ionicons name="chatbubble" size={16} color="#fff" />
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -211,9 +256,9 @@ export default function MessagesScreen() {
   );
 
   const sections = [
-    {
+    ...(isPatient ? [{
       title: isKn ? 'Inzobere zibonetse' : 'Explore Specialists',
-      subtitle: isKn ? 'Kanda inzobere utangire ikiganiro' : 'Tap a specialist to start a private conversation',
+      subtitle: isKn ? 'Kanda inzobere utangire ikiganiro bwite' : 'Tap to start a private, safe conversation',
       data: specialists.length > 0 ? specialists : [{ _empty: true } as any],
       renderItem: specialists.length > 0
         ? renderSpecialistCard
@@ -223,11 +268,23 @@ export default function MessagesScreen() {
             <Text style={styles.emptyText}>{isKn ? 'Nta nzobere zabonetse' : 'No specialists onboarded yet'}</Text>
           </View>
         ),
-    },
+    }] : []),
     ...(conversations.length > 0 ? [{
       title: isKn ? 'Ibiganiro byawe' : 'Your Conversations',
+      subtitle: isKn ? 'Ibiganiro byawe bya vuba aha' : 'Your recent message threads',
       data: conversations,
       renderItem: renderConvRow,
+    }] : []),
+    ...(conversations.length === 0 && !loading ? [{
+      title: isKn ? 'Ibiganiro byawe' : 'Your Conversations',
+      data: [{ _noConvs: true } as any],
+      renderItem: () => (
+        <View style={styles.emptyBox}>
+          <Ionicons name="chatbubbles-outline" size={40} color={Colors.tabInactive} />
+          <Text style={styles.emptyText}>{isKn ? 'Nta biganiro kandi' : 'No conversations yet'}</Text>
+          <Text style={styles.emptySubText}>{isKn ? 'Tangira ikiganiro na inzobere' : 'Pick a specialist above to get started'}</Text>
+        </View>
+      ),
     }] : []),
   ];
 
@@ -266,6 +323,57 @@ export default function MessagesScreen() {
           }
         />
       )}
+
+      {/* ── Booking modal ── */}
+      <Modal visible={!!bookingSpecialist} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.bookModal}>
+            <View style={styles.bookModalHeader}>
+              <Text style={styles.bookModalTitle}>
+                {isKn ? 'Saba Igihe' : 'Book a Session'}
+              </Text>
+              <TouchableOpacity onPress={() => setBookingSpecialist(null)}>
+                <Ionicons name="close" size={22} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            {bookingSpecialist && (
+              <Text style={styles.bookModalSub}>
+                {isKn ? 'Na' : 'With'} <Text style={{ fontWeight: '800', color: Colors.text }}>{bookingSpecialist.name}</Text>
+                {' · '}{bookingSpecialist.specialization}
+              </Text>
+            )}
+            <Text style={styles.bookModalLabel}>{isKn ? 'Hitamo igihe:' : 'Pick a time slot:'}</Text>
+            <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
+              {buildSlots().map(slot => (
+                <TouchableOpacity
+                  key={slot.iso}
+                  style={[styles.slotRow, selectedSlot === slot.iso && styles.slotRowActive]}
+                  onPress={() => setSelectedSlot(slot.iso)}
+                >
+                  <Ionicons
+                    name={selectedSlot === slot.iso ? 'radio-button-on' : 'radio-button-off'}
+                    size={18}
+                    color={selectedSlot === slot.iso ? Colors.primary : Colors.textMuted}
+                  />
+                  <Text style={[styles.slotText, selectedSlot === slot.iso && styles.slotTextActive]}>
+                    {slot.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.bookConfirmBtn, (!selectedSlot || booking) && { opacity: 0.5 }]}
+              onPress={handleBook}
+              disabled={!selectedSlot || booking}
+            >
+              {booking
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Text style={styles.bookConfirmText}>{isKn ? 'Ohereza Ubusabe' : 'Send Request'}</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -294,11 +402,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#EBF2FA', ...Shadows.soft,
   },
   specAvatar: {
-    width: 52, height: 52, borderRadius: 26,
+    width: 56, height: 56, borderRadius: 28,
     justifyContent: 'center', alignItems: 'center',
     borderWidth: 1.5,
   },
-  specInitials: { fontSize: 18, fontWeight: '900' },
+  specAvatarImg: { borderWidth: 0, overflow: 'hidden' },
+  specInitials: { fontSize: 20, fontWeight: '900' },
   specBody: { flex: 1 },
   specNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   specName: { fontSize: 15, fontWeight: '800', color: Colors.text },
@@ -306,15 +415,42 @@ const styles = StyleSheet.create({
   verifiedText: { fontSize: 10, color: Colors.primary, fontWeight: '700' },
   specTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
   specTagText: { fontSize: 11, fontWeight: '800' },
-  specBio: { fontSize: 12, color: Colors.textMuted, lineHeight: 17, marginBottom: 8, fontWeight: '500' },
-  specFooter: { gap: 4 },
-  specMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  specMetaText: { fontSize: 11, color: Colors.textMuted, fontWeight: '600' },
+  specBio: { fontSize: 12, color: Colors.textMuted, lineHeight: 17, fontWeight: '500' },
+  specActions: { flexDirection: 'column', gap: 8, alignSelf: 'center' },
+  bookBtn: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: '#EBF4FF', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: '#D4E6FC',
+  },
   chatBtn: {
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center',
-    alignSelf: 'center', ...Shadows.soft,
+    ...Shadows.soft,
   },
+
+  // Booking modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  bookModal: {
+    backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 24, paddingBottom: 40,
+  },
+  bookModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  bookModalTitle: { fontSize: 20, fontWeight: '900', color: Colors.text },
+  bookModalSub: { fontSize: 13, color: Colors.textMuted, fontWeight: '600', marginBottom: 20 },
+  bookModalLabel: { fontSize: 13, fontWeight: '800', color: Colors.textMuted, letterSpacing: 0.5, marginBottom: 10 },
+  slotRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 13, paddingHorizontal: 14, borderRadius: 14,
+    borderWidth: 1, borderColor: '#F1F5F9', marginBottom: 8,
+  },
+  slotRowActive: { borderColor: Colors.primary, backgroundColor: '#F0F7FF' },
+  slotText: { fontSize: 14, color: Colors.textMuted, fontWeight: '600' },
+  slotTextActive: { color: Colors.primary, fontWeight: '800' },
+  bookConfirmBtn: {
+    marginTop: 16, backgroundColor: Colors.primary, borderRadius: 16,
+    paddingVertical: 16, alignItems: 'center', ...Shadows.soft,
+  },
+  bookConfirmText: { color: '#fff', fontSize: 16, fontWeight: '800' },
 
   // ── Conversation row ─────────────────────────────────────────
   convRow: {
@@ -342,4 +478,5 @@ const styles = StyleSheet.create({
 
   emptyBox: { alignItems: 'center', paddingVertical: 40, gap: 10 },
   emptyText: { fontSize: 15, fontWeight: '700', color: Colors.textMuted },
+  emptySubText: { fontSize: 13, color: Colors.tabInactive, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
 });

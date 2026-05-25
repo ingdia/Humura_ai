@@ -41,7 +41,7 @@ const TECHNIQUES = [
   { label: '5-5',     name: 'Equal Breathing',   desc: 'Balance & grounding', durations: [5000, 1000, 5000, 1000] },
 ];
 
-const PHASES = ['Breathe in...', 'Hold...', 'Breathe out...', 'Rest...'];
+const PHASES = ['Breathe in slowly...', 'Hold gently...', 'Let it all out...', 'You are safe...'];
 
 export default function CalmScreen() {
   const { t, language } = useLanguage();
@@ -109,35 +109,51 @@ export default function CalmScreen() {
     return (
       <ImageBackground source={{ uri: scene.image }} style={styles.sessionBg} resizeMode="cover">
         <LinearGradient
-          colors={['rgba(26,26,46,0.5)', 'rgba(74,144,226,0.3)', 'rgba(26,26,46,0.8)']}
+          colors={['rgba(8,12,28,0.82)', 'rgba(20,50,90,0.55)', 'rgba(8,12,28,0.92)']}
           style={styles.sessionOverlay}
         >
           <SafeAreaView style={{ flex: 1 }}>
+            {/* Top bar */}
             <View style={styles.sessionTop}>
-              <TouchableOpacity style={styles.sessionBackBtn} onPress={() => { setMode('done'); }}>
-                <Ionicons name="close" size={24} color="#fff" />
+              <TouchableOpacity style={styles.sessionBackBtn} onPress={() => setMode('done')}>
+                <Ionicons name="close" size={20} color="rgba(255,255,255,0.7)" />
               </TouchableOpacity>
-              <View style={styles.sessionAmbience}>
-                <Ionicons name="musical-notes" size={14} color="#fff" />
-                <Text style={styles.ambienceText}>{scene.ambience}</Text>
-              </View>
+              <Text style={styles.sessionSceneLabel}>{scene.label}</Text>
               <View style={styles.sessionTimerPill}>
                 <Text style={styles.sessionTimer}>{fmt(seconds)}</Text>
               </View>
             </View>
 
+            {/* Hero instruction text */}
+            <View style={styles.sessionHeroWrap}>
+              <Text style={styles.sessionHeroPhase}>{PHASES[phase]}</Text>
+              <Text style={styles.sessionHeroSub}>{technique.name}</Text>
+            </View>
+
+            {/* Animated breathing circle */}
             <View style={styles.sessionCircleWrap}>
               <Animated.View style={[styles.ringPulse, { transform: [{ scale: ringScale }], opacity: ringOpacity }]} />
               <Animated.View style={[styles.sessionCircle, { transform: [{ scale }] }]}>
-                <LinearGradient colors={[Colors.primary, Colors.secondary]} style={styles.sessionCircleGrad}>
-                  <Ionicons name="leaf" size={42} color="#fff" />
+                <LinearGradient
+                  colors={['rgba(255,255,255,0.25)', 'rgba(255,255,255,0.08)']}
+                  style={styles.sessionCircleGrad}
+                >
+                  <Ionicons name="leaf" size={34} color="#fff" />
                 </LinearGradient>
               </Animated.View>
             </View>
 
-            <View style={styles.sessionPhaseWrap}>
-              <Text style={styles.sessionPhase}>{PHASES[phase]}</Text>
-              <Text style={styles.sessionTechnique}>{technique.name} · {technique.label}</Text>
+            {/* Bottom: phase dots + ambience */}
+            <View style={styles.sessionBottom}>
+              <View style={styles.phaseDots}>
+                {[0, 1, 2, 3].map(i => (
+                  <View key={i} style={[styles.phaseDot, phase === i && styles.phaseDotActive]} />
+                ))}
+              </View>
+              <View style={styles.sessionAmbienceRow}>
+                <Ionicons name="musical-notes" size={12} color="rgba(255,255,255,0.45)" />
+                <Text style={styles.ambienceText}>{scene.ambience}</Text>
+              </View>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -153,13 +169,17 @@ export default function CalmScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('calm_title')}</Text>
-          <Text style={styles.headerSub}>{language === 'en' ? 'Choose a scene and breathing technique to find your calm.' : 'Hitamo ahantu ni uburyo bwo guhumeka kugira ngo utuze.'}</Text>
+          <Text style={styles.headerSub}>
+            {language === 'en'
+              ? "You're allowed to feel this heavy. This space is just for you — breathe in slowly, breathe out everything that's weighing you down."
+              : "Nemera kugira uremere. Aha ni ahantu hawe — humeka buhoro, sohora byose bikuremereye."}
+          </Text>
           <View style={styles.titleUnderline} />
         </View>
 
         {/* Guided Visual Journeys (Background Selection) */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{language === 'en' ? 'CHOOSE YOUR CALM SCENE' : 'HITAMO AHO WICARA'}</Text>
+          <Text style={styles.sectionLabel}>{language === 'en' ? 'FIND YOUR SAFE PLACE' : 'HITAMO AHANTU HAWE HIZEWE'}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sceneScroll}>
             {SCENES.map(s => (
               <TouchableOpacity
@@ -192,7 +212,7 @@ export default function CalmScreen() {
 
         {/* Breathing Technique Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>{language === 'en' ? 'Breathing Technique' : 'Uburyo bwo guhumeka'}</Text>
+          <Text style={styles.cardTitle}>{language === 'en' ? 'How do you want to breathe?' : 'Uhumeke ute uyu munsi?'}</Text>
           {TECHNIQUES.map(t => (
             <TouchableOpacity
               key={t.label}
@@ -213,13 +233,14 @@ export default function CalmScreen() {
         {/* Start Button (No Heart Icon) */}
         <TouchableOpacity style={styles.startBtn} onPress={() => setMode('session')} activeOpacity={0.88}>
           <LinearGradient colors={[Colors.primary, Colors.secondary]} style={styles.startBtnGrad}>
-            <Text style={styles.startBtnText}>{language === 'en' ? 'Start Breathing Guide' : 'Tangira guhumeka'}</Text>
+            <Ionicons name="leaf" size={20} color="#fff" />
+            <Text style={styles.startBtnText}>{language === 'en' ? 'I am ready — breathe with me' : 'Ndi hano — tuvugane guhumeka'}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         {/* YouTube Calm Music (Quick Links) */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{language === 'en' ? 'CALM MUSIC LIBRARY' : 'INDIRIMBO ZO GUTUZA'}</Text>
+          <Text style={styles.sectionLabel}>{language === 'en' ? 'LET THE SOUND CARRY YOU' : 'UMUZIKI UZO KUTUZA'}</Text>
           <View style={styles.card}>
             {[
               { id: '1', title: 'Deep Relaxation', url: 'https://www.youtube.com/watch?v=1ZYbU82GVz4' },
@@ -274,7 +295,7 @@ const styles = StyleSheet.create({
   techniqueDesc: { fontSize: 12, color: Colors.textMuted, marginTop: 2, fontWeight: '500' },
 
   startBtn: { marginHorizontal: 20, marginTop: 24, borderRadius: 16, overflow: 'hidden', ...Shadows.premium },
-  startBtnGrad: { alignItems: 'center', justifyContent: 'center', paddingVertical: 18 },
+  startBtnGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 18, gap: 10 },
   startBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
 
   musicLink: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
@@ -283,17 +304,34 @@ const styles = StyleSheet.create({
   // Session
   sessionBg: { flex: 1, width, height },
   sessionOverlay: { flex: 1 },
-  sessionTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 60 },
-  sessionBackBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
-  sessionAmbience: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
-  ambienceText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  sessionTimerPill: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  sessionTimer: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  sessionTop: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8,
+  },
+  sessionBackBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center',
+  },
+  sessionSceneLabel: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 0.5 },
+  sessionTimerPill: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  sessionTimer: { color: '#fff', fontWeight: '800', fontSize: 13 },
+
+  sessionHeroWrap: { alignItems: 'center', paddingHorizontal: 32, paddingTop: 32, paddingBottom: 16 },
+  sessionHeroPhase: { fontSize: 44, fontWeight: '900', color: '#fff', textAlign: 'center', lineHeight: 52, letterSpacing: 0.5 },
+  sessionHeroSub: { fontSize: 15, color: 'rgba(255,255,255,0.55)', marginTop: 10, fontWeight: '600', letterSpacing: 1 },
+
   sessionCircleWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  ringPulse: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  sessionCircle: { width: 150, height: 150, borderRadius: 75, overflow: 'hidden' },
+  ringPulse: {
+    position: 'absolute', width: 200, height: 200, borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.18)',
+  },
+  sessionCircle: { width: 120, height: 120, borderRadius: 60, overflow: 'hidden' },
   sessionCircleGrad: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  sessionPhaseWrap: { alignItems: 'center', paddingBottom: 80 },
-  sessionPhase: { fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: 1 },
-  sessionTechnique: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 12, fontWeight: '600' },
+
+  sessionBottom: { alignItems: 'center', paddingBottom: 60, gap: 16 },
+  phaseDots: { flexDirection: 'row', gap: 8 },
+  phaseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)' },
+  phaseDotActive: { width: 24, backgroundColor: '#fff' },
+  sessionAmbienceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ambienceText: { color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: '600' },
 });

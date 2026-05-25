@@ -36,7 +36,7 @@ const GROUPS = [
     descK: "Soma ku muryango, amategeko n'uburenganzira bwawe.",
     icon: 'shield-checkmark',
     color: '#E74C3C',
-    image: 'https://images.unsplash.com/photo-1531123897727-8f129e1bf98c?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '3',
@@ -46,7 +46,7 @@ const GROUPS = [
     descK: "Urukundo n'ubujyanama ku bangavu babyaye.",
     icon: 'heart',
     color: '#27AE60',
-    image: 'https://images.unsplash.com/photo-1509909756405-be01998816c5?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '4',
@@ -76,7 +76,7 @@ const GROUPS = [
     descK: "Kwiga imyuga nko kudoda, gusuka, n'ibindi bibyara inyungu.",
     icon: 'construct',
     color: '#16A085',
-    image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32b7?auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=800&q=80',
   },
   {
     id: '7',

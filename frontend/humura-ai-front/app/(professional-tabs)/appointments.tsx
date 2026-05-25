@@ -1,62 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Switch, TextInput, Linking, Alert, StatusBar
+  SafeAreaView, Switch, TextInput, Linking, Alert, StatusBar, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Colors, Spacing, Border, Shadows } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useProfessional } from '../../src/contexts/ProfessionalContext';
 import { useLanguage } from '../../src/contexts/LanguageContext';
+import { appointmentsAPI } from '../../src/services/api';
+import { useFocusEffect } from '@react-navigation/native';
+
+interface Appointment {
+  id: number;
+  patient_id: number;
+  patient_name: string;
+  scheduled_at: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+  meet_link?: string;
+  type?: string;
+}
 
 export default function ProfessionalAppointments() {
-  const { appointments, acceptAppointment, declineAppointment } = useProfessional();
   const { t } = useLanguage();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const translateType = (type: string) => {
-    if (type.toLowerCase().includes('initial')) return t('appt_initial');
-    if (type.toLowerCase().includes('follow')) return t('appt_followup');
-    if (type.toLowerCase().includes('stress')) return t('appt_stress');
-    return t('appt_general');
-  };
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const res = await appointmentsAPI.list();
+      setAppointments(res.data);
+    } catch {
+      // keep existing
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
   const [tab, setTab] = useState<'upcoming' | 'pending'>('upcoming');
   const [isTeleconsultation, setIsTeleconsultation] = useState(true);
   const [customLink, setCustomLink] = useState('');
 
-  // Filter appointments
   const upcomingList = appointments.filter(a => a.status === 'CONFIRMED');
-  const pendingList = appointments.filter(a => a.status === 'PENDING');
-  const pendingCount = pendingList.length;
+  const pendingList  = appointments.filter(a => a.status === 'PENDING');
 
-  const handleAccept = (id: string, patientName: string) => {
-    const meetLink = isTeleconsultation 
-      ? (customLink.trim() || `https://meet.jit.si/humura-ai-session-${id}-${Math.floor(1000 + Math.random() * 9000)}`)
-      : '';
-    
-    acceptAppointment(id, meetLink);
-    Alert.alert(
-      "Booking Approved",
-      `You have successfully confirmed the appointment with ${patientName}. ${
-        isTeleconsultation ? "\nA secure video meeting link has been generated." : ""
-      }`,
-      [{ text: "Great" }]
-    );
-    setCustomLink('');
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
+      + ' · ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const handleDecline = (id: string, patientName: string) => {
+  const handleAccept = async (appt: Appointment) => {
+    try {
+      await appointmentsAPI.updateStatus(appt.id, 'CONFIRMED');
+      if (isTeleconsultation) {
+        await appointmentsAPI.videoLink(appt.id);
+      }
+      setAppointments(prev => prev.map(a =>
+        a.id === appt.id ? { ...a, status: 'CONFIRMED' } : a
+      ));
+      Alert.alert('Booking Approved', `Confirmed with ${appt.patient_name}.${isTeleconsultation ? '\nA Jitsi video link will be generated.' : ''}`, [{ text: 'Great' }]);
+      setCustomLink('');
+    } catch {
+      Alert.alert('Error', 'Could not confirm appointment. Try again.');
+    }
+  };
+
+  const handleDecline = (appt: Appointment) => {
     Alert.alert(
-      "Decline Appointment",
-      `Are you sure you want to decline the session request from ${patientName}?`,
+      'Decline Appointment',
+      `Decline the request from ${appt.patient_name}?`,
       [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Decline", 
-          style: "destructive",
-          onPress: () => {
-            declineAppointment(id);
-            Alert.alert("Request Declined", `You declined the request from ${patientName}.`);
-          }
-        }
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Decline', style: 'destructive',
+          onPress: async () => {
+            try {
+              await appointmentsAPI.updateStatus(appt.id, 'CANCELLED');
+              setAppointments(prev => prev.filter(a => a.id !== appt.id));
+              Alert.alert('Declined', `Request from ${appt.patient_name} declined.`);
+            } catch {
+              Alert.alert('Error', 'Could not decline. Try again.');
+            }
+          },
+        },
       ]
     );
   };
@@ -126,66 +156,73 @@ export default function ProfessionalAppointments() {
           activeOpacity={0.7}
         >
           <Text style={[styles.tabText, tab === 'pending' && styles.tabTextActive]}>{t('pro_pending_requests')}</Text>
-          {pendingCount > 0 && (
+          {pendingList.length > 0 && (
             <View style={[styles.tabBadge, { backgroundColor: '#FDEDEC' }]}>
-              <Text style={[styles.tabBadgeText, { color: '#E74C3C' }]}>{pendingCount}</Text>
+              <Text style={[styles.tabBadgeText, { color: '#E74C3C' }]}>{pendingList.length}</Text>
             </View>
           )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {tab === 'upcoming' ? (
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={Colors.primary} />}
+      >
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        ) : tab === 'upcoming' ? (
           upcomingList.length > 0 ? (
             upcomingList.map(app => (
               <View key={app.id} style={styles.appointmentCard}>
                 <View style={styles.appointmentHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Ionicons name="time-outline" size={16} color={Colors.textMuted} />
-                    <Text style={styles.appointmentTime}>{app.time}</Text>
+                    <Text style={styles.appointmentTime}>{fmtDate(app.scheduled_at)}</Text>
                   </View>
-                  <View style={[styles.statusBadge, app.isVirtual ? styles.virtualBadge : styles.clinicBadge]}>
-                    <Text style={[styles.statusText, app.isVirtual ? styles.virtualText : styles.clinicText]}>
-                      {app.isVirtual ? t('pro_virtual_room') : t('pro_in_person')}
+                  <View style={[styles.statusBadge, app.meet_link ? styles.virtualBadge : styles.clinicBadge]}>
+                    <Text style={[styles.statusText, app.meet_link ? styles.virtualText : styles.clinicText]}>
+                      {app.meet_link ? t('pro_virtual_room') : t('pro_in_person')}
                     </Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.appointmentBody}>
                   <View style={styles.patientInfo}>
                     <View style={styles.avatarPlaceholder}>
-                      <Text style={styles.avatarText}>{app.patientName.charAt(0)}</Text>
+                      <Text style={styles.avatarText}>{app.patient_name.charAt(0)}</Text>
                     </View>
                     <View>
-                      <Text style={styles.patientName}>{app.patientName}</Text>
-                      <Text style={styles.patientType}>{translateType(app.type)}</Text>
-                      <Text style={styles.patientDate}>{app.date}</Text>
+                      <Text style={styles.patientName}>{app.patient_name}</Text>
+                      <Text style={styles.patientType}>{app.type ?? 'Session'}</Text>
                     </View>
                   </View>
                 </View>
 
-                {app.isVirtual && app.meetLink && (
+                {app.meet_link && (
                   <View style={styles.meetingLinkBox}>
                     <Ionicons name="link" size={14} color={Colors.primary} />
-                    <Text style={styles.meetingLinkText} numberOfLines={1}>{app.meetLink}</Text>
+                    <Text style={styles.meetingLinkText} numberOfLines={1}>{app.meet_link}</Text>
                   </View>
                 )}
-                
+
                 <View style={styles.actionRow}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.actionButton, styles.secondaryButton]}
-                    onPress={() => Alert.alert("Reschedule Session", "To reschedule, please message the patient directly in the inbox to coordinate a slot.")}
+                    onPress={() => Alert.alert('Reschedule', 'Message the patient in the inbox to coordinate a new slot.')}
                   >
                     <Ionicons name="chatbubbles-outline" size={16} color={Colors.text} style={{ marginRight: 6 }} />
                     <Text style={styles.secondaryButtonText}>{t('pro_message')}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.actionButton, styles.primaryButton]}
-                    onPress={() => handleStartSession(app.meetLink, app.patientName)}
+                    onPress={() => handleStartSession(app.meet_link ?? '', app.patient_name)}
                   >
-                    <Ionicons name={app.isVirtual ? "videocam" : "business"} size={16} color={Colors.white} style={{ marginRight: 6 }} />
+                    <Ionicons name={app.meet_link ? 'videocam' : 'business'} size={16} color={Colors.white} style={{ marginRight: 6 }} />
                     <Text style={styles.primaryButtonText}>
-                      {app.isVirtual ? t('pro_start_meet') : t('pro_view_clinic')}
+                      {app.meet_link ? t('pro_start_meet') : t('pro_view_clinic')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -207,22 +244,22 @@ export default function ProfessionalAppointments() {
                 <View style={styles.appointmentHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Ionicons name="calendar-outline" size={16} color={Colors.textMuted} />
-                    <Text style={styles.appointmentTime}>{app.date}</Text>
+                    <Text style={styles.appointmentTime}>{fmtDate(app.scheduled_at)}</Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: '#FEF3E6' }]}>
                     <Text style={[styles.statusText, { color: '#F39C12' }]}>{t('pro_awaiting_action')}</Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.appointmentBody}>
                   <View style={styles.patientInfo}>
                     <View style={[styles.avatarPlaceholder, { backgroundColor: '#FDF2E9' }]}>
-                      <Text style={[styles.avatarText, { color: '#F39C12' }]}>{app.patientName.charAt(0)}</Text>
+                      <Text style={[styles.avatarText, { color: '#F39C12' }]}>{app.patient_name.charAt(0)}</Text>
                     </View>
                     <View>
-                      <Text style={styles.patientName}>{app.patientName}</Text>
-                      <Text style={styles.patientType}>{translateType(app.type)}</Text>
-                      <Text style={styles.patientDate}>{t('pro_requested_slot')}: {app.time}</Text>
+                      <Text style={styles.patientName}>{app.patient_name}</Text>
+                      <Text style={styles.patientType}>{app.type ?? 'Session request'}</Text>
+                      <Text style={styles.patientDate}>{t('pro_requested_slot')}: {fmtDate(app.scheduled_at)}</Text>
                     </View>
                   </View>
                 </View>
@@ -270,14 +307,14 @@ export default function ProfessionalAppointments() {
                 <View style={styles.actionRow}>
                   <TouchableOpacity 
                     style={[styles.actionButton, styles.dangerButton]}
-                    onPress={() => handleDecline(app.id, app.patientName)}
+                    onPress={() => handleDecline(app)}
                   >
                     <Ionicons name="close-circle-outline" size={16} color="#E74C3C" style={{ marginRight: 6 }} />
                     <Text style={styles.dangerButtonText}>{t('pro_decline')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.actionButton, styles.successButton]}
-                    onPress={() => handleAccept(app.id, app.patientName)}
+                    onPress={() => handleAccept(app)}
                   >
                     <Ionicons name="checkmark-circle-outline" size={16} color={Colors.white} style={{ marginRight: 6 }} />
                     <Text style={styles.primaryButtonText}>{t('pro_accept_booking')}</Text>

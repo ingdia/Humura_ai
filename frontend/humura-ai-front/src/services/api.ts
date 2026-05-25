@@ -69,6 +69,24 @@ export const psychologistsAPI = {
     api.get('/api/psychologists'),
 };
 
+// ── Appointments ─────────────────────────────────────────────
+export const appointmentsAPI = {
+  book: (psychologist_id: number, scheduled_at: string) =>
+    api.post('/api/appointments', { psychologist_id, scheduled_at }),
+
+  list: () =>
+    api.get('/api/appointments'),
+
+  updateStatus: (id: number, status: string) =>
+    api.put(`/api/appointments/${id}/status`, { status }),
+
+  cancel: (id: number) =>
+    api.delete(`/api/appointments/${id}`),
+
+  videoLink: (id: number) =>
+    api.get(`/api/appointments/${id}/video-link`),
+};
+
 // ── Community ─────────────────────────────────────────────────
 export const communityAPI = {
   groups: () =>

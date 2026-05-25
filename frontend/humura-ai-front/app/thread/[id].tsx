@@ -97,10 +97,12 @@ export default function ThreadScreen() {
     };
   }, [user?.id, otherId]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom on initial load
   useEffect(() => {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  }, [messages, isOtherTyping]);
+    if (messages.length > 0) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 80);
+    }
+  }, [loading]);
 
   const send = async () => {
     const trimmed = text.trim();
@@ -169,7 +171,12 @@ export default function ThreadScreen() {
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         ) : (
-          <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+          >
             <View style={styles.encryptedBanner}>
               <Ionicons name="shield-checkmark" size={14} color={Colors.primary} />
               <Text style={styles.encryptedText}>

@@ -45,36 +45,35 @@ export default function HomeScreen() {
       tab: '/messages',
       icon: 'chatbubbles',
       title: t('talk_specialist'),
-      desc: 'Talk to a nurse.',
+      desc: language === 'en' ? 'Private chat with a specialist.' : "Vugana mu ibanga n'inzobere.",
       colors: [Colors.primary, Colors.secondary] as [string, string],
       badge: 'Private',
     },
-    { 
-      tab: '/(tabs)/feed', 
-      icon: 'people', 
-      title: t('community_title'), 
-      desc: t('community_desc'), 
-      colors: [Colors.white, '#F1F5F9'] as [string, string], 
+    {
+      tab: '/(tabs)/feed',
+      icon: 'people',
+      title: t('community_title'),
+      desc: t('community_desc'),
+      colors: [Colors.white, '#F1F5F9'] as [string, string],
       badge: 'Active',
-      isGrey: true
+      isGrey: true,
     },
-    { 
-      tab: '/(tabs)/resources', 
-      icon: 'book', 
-      title: t('resources_title'), 
-      desc: t('resources_desc'), 
-      colors: [Colors.white, '#F1F5F9'] as [string, string], 
+    {
+      tab: '/(tabs)/resources',
+      icon: 'book',
+      title: t('resources_title'),
+      desc: t('resources_desc'),
+      colors: [Colors.white, '#F1F5F9'] as [string, string],
       badge: 'Library',
-      isGrey: true
+      isGrey: true,
     },
-    { 
-      tab: '/(tabs)/calm', 
-      icon: 'compass', 
-      title: t('calm_title'), 
-      desc: 'Holistic support tools.', 
-      colors: [Colors.white, '#F1F5F9'] as [string, string], 
-      badge: '360',
-      isGrey: true
+    {
+      tab: '/(tabs)/calm',
+      icon: 'leaf',
+      title: t('calm_title'),
+      desc: language === 'en' ? 'Feel heavy? Breathe it out here.' : 'Uremewe? Humeka utuze hano.',
+      colors: [Colors.primary, Colors.secondary] as [string, string],
+      badge: 'Calm',
     },
   ];
 
