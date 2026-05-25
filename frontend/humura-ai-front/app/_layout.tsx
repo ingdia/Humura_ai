@@ -15,6 +15,8 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)/login"   options={{ headerShown: false }} />
           <Stack.Screen name="(auth)/signup"  options={{ headerShown: false }} />
           <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+          <Stack.Screen name="messages" options={{ headerShown: false }} />
+          <Stack.Screen name="thread/[id]" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />
       </AuthProvider>

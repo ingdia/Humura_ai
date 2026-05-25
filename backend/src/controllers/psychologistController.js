@@ -6,11 +6,12 @@ const pool = require('../config/db');
 const getPsychologists = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT u.id, u.name, u.email, u.profile_picture_url, 
-             p.bio, p.specialization, p.hourly_rate, p.availability
+      SELECT u.id, u.name, u.email, u.profile_picture_url,
+             p.bio, p.specialization, p.hourly_rate, p.availability, p.is_approved
       FROM users u
       JOIN psychologist_profiles p ON u.id = p.user_id
-      WHERE u.role = 'PSYCHOLOGIST' AND p.is_approved = TRUE
+      WHERE u.role = 'PSYCHOLOGIST'
+      ORDER BY p.is_approved DESC, u.created_at DESC
     `);
     res.json(result.rows);
   } catch (error) {

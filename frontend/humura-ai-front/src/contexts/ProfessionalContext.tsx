@@ -77,9 +77,9 @@ const ProfessionalContext = createContext<ProfessionalContextType | undefined>(u
 
 export function ProfessionalProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<ProfessionalProfile>({
-    name: 'Dr. Amina Uwase',
-    specialization: 'Clinical Psychologist',
-    bio: 'Passionate about mental well-being and Cognitive Behavioral Therapy (CBT). Specialized in anxiety and crisis counseling.',
+    name: '',
+    specialization: '',
+    bio: 'Passionate about mental well-being and supporting young women in Rwanda.',
     clinic: 'Kigali Mental Health Center',
     rate: '25,000 RWF',
   });
@@ -87,32 +87,32 @@ export function ProfessionalProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] = useState<Appointment[]>([
     {
       id: '1',
-      patientName: 'John Doe',
+      patientName: 'Bella Calmine',
       type: 'Initial Consultation',
       time: '10:00 AM - 11:00 AM',
       status: 'CONFIRMED',
       isVirtual: true,
-      date: 'Today, May 20',
+      date: 'Today, May 25',
       meetLink: 'https://meet.jit.si/humura-ai-session-1',
     },
     {
       id: '2',
-      patientName: 'Alice Smith',
+      patientName: 'Amara Niyonsaba',
       type: 'Follow-up Session',
       time: '02:00 PM - 03:00 PM',
       status: 'PENDING',
       isVirtual: true,
-      date: 'Tomorrow, May 21',
+      date: 'Tomorrow, May 26',
       meetLink: '',
     },
     {
       id: '3',
-      patientName: 'David Ntwari',
+      patientName: 'Claudine Uwera',
       type: 'Stress Management Support',
       time: '04:00 PM - 05:00 PM',
       status: 'PENDING',
       isVirtual: false,
-      date: 'Friday, May 22',
+      date: 'Tuesday, May 27',
       meetLink: '',
     },
   ]);

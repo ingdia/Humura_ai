@@ -6,9 +6,18 @@ import {
 import { Colors, Spacing, Border, Shadows } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfessional } from '../../src/contexts/ProfessionalContext';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 export default function ProfessionalAppointments() {
   const { appointments, acceptAppointment, declineAppointment } = useProfessional();
+  const { t } = useLanguage();
+
+  const translateType = (type: string) => {
+    if (type.toLowerCase().includes('initial')) return t('appt_initial');
+    if (type.toLowerCase().includes('follow')) return t('appt_followup');
+    if (type.toLowerCase().includes('stress')) return t('appt_stress');
+    return t('appt_general');
+  };
   const [tab, setTab] = useState<'upcoming' | 'pending'>('upcoming');
   const [isTeleconsultation, setIsTeleconsultation] = useState(true);
   const [customLink, setCustomLink] = useState('');
@@ -85,11 +94,13 @@ export default function ProfessionalAppointments() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoIcon}>
-            <Ionicons name="calendar" size={18} color="#fff" />
+        <View style={styles.headerTop}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoIcon}>
+              <Ionicons name="calendar" size={18} color="#fff" />
+            </View>
+            <Text style={styles.headerTitle}>{t('pro_client_sessions')}</Text>
           </View>
-          <Text style={styles.headerTitle}>Client Sessions</Text>
         </View>
         <View style={styles.titleUnderline} />
       </View>
@@ -101,7 +112,7 @@ export default function ProfessionalAppointments() {
           onPress={() => setTab('upcoming')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>Upcoming</Text>
+          <Text style={[styles.tabText, tab === 'upcoming' && styles.tabTextActive]}>{t('pro_upcoming')}</Text>
           {upcomingList.length > 0 && (
             <View style={[styles.tabBadge, { backgroundColor: '#E8F4FD' }]}>
               <Text style={[styles.tabBadgeText, { color: Colors.primary }]}>{upcomingList.length}</Text>
@@ -114,7 +125,7 @@ export default function ProfessionalAppointments() {
           onPress={() => setTab('pending')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, tab === 'pending' && styles.tabTextActive]}>Pending Requests</Text>
+          <Text style={[styles.tabText, tab === 'pending' && styles.tabTextActive]}>{t('pro_pending_requests')}</Text>
           {pendingCount > 0 && (
             <View style={[styles.tabBadge, { backgroundColor: '#FDEDEC' }]}>
               <Text style={[styles.tabBadgeText, { color: '#E74C3C' }]}>{pendingCount}</Text>
@@ -135,7 +146,7 @@ export default function ProfessionalAppointments() {
                   </View>
                   <View style={[styles.statusBadge, app.isVirtual ? styles.virtualBadge : styles.clinicBadge]}>
                     <Text style={[styles.statusText, app.isVirtual ? styles.virtualText : styles.clinicText]}>
-                      {app.isVirtual ? 'Virtual Room' : 'In-Person'}
+                      {app.isVirtual ? t('pro_virtual_room') : t('pro_in_person')}
                     </Text>
                   </View>
                 </View>
@@ -147,7 +158,7 @@ export default function ProfessionalAppointments() {
                     </View>
                     <View>
                       <Text style={styles.patientName}>{app.patientName}</Text>
-                      <Text style={styles.patientType}>{app.type}</Text>
+                      <Text style={styles.patientType}>{translateType(app.type)}</Text>
                       <Text style={styles.patientDate}>{app.date}</Text>
                     </View>
                   </View>
@@ -166,7 +177,7 @@ export default function ProfessionalAppointments() {
                     onPress={() => Alert.alert("Reschedule Session", "To reschedule, please message the patient directly in the inbox to coordinate a slot.")}
                   >
                     <Ionicons name="chatbubbles-outline" size={16} color={Colors.text} style={{ marginRight: 6 }} />
-                    <Text style={styles.secondaryButtonText}>Message</Text>
+                    <Text style={styles.secondaryButtonText}>{t('pro_message')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.actionButton, styles.primaryButton]}
@@ -174,7 +185,7 @@ export default function ProfessionalAppointments() {
                   >
                     <Ionicons name={app.isVirtual ? "videocam" : "business"} size={16} color={Colors.white} style={{ marginRight: 6 }} />
                     <Text style={styles.primaryButtonText}>
-                      {app.isVirtual ? "Start Meet" : "View Clinic"}
+                      {app.isVirtual ? t('pro_start_meet') : t('pro_view_clinic')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -185,8 +196,8 @@ export default function ProfessionalAppointments() {
               <View style={styles.emptyCircle}>
                 <Ionicons name="calendar-outline" size={32} color={Colors.tabInactive} />
               </View>
-              <Text style={styles.emptyText}>No upcoming sessions confirmed</Text>
-              <Text style={styles.emptySub}>Approve incoming sessions in the &quot;Pending Requests&quot; tab to schedule them here.</Text>
+              <Text style={styles.emptyText}>{t('pro_no_confirmed')}</Text>
+              <Text style={styles.emptySub}>{t('pro_no_confirmed_sub')}</Text>
             </View>
           )
         ) : (
@@ -199,7 +210,7 @@ export default function ProfessionalAppointments() {
                     <Text style={styles.appointmentTime}>{app.date}</Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: '#FEF3E6' }]}>
-                    <Text style={[styles.statusText, { color: '#F39C12' }]}>Awaiting Action</Text>
+                    <Text style={[styles.statusText, { color: '#F39C12' }]}>{t('pro_awaiting_action')}</Text>
                   </View>
                 </View>
                 
@@ -210,8 +221,8 @@ export default function ProfessionalAppointments() {
                     </View>
                     <View>
                       <Text style={styles.patientName}>{app.patientName}</Text>
-                      <Text style={styles.patientType}>{app.type}</Text>
-                      <Text style={styles.patientDate}>Requested slot: {app.time}</Text>
+                      <Text style={styles.patientType}>{translateType(app.type)}</Text>
+                      <Text style={styles.patientDate}>{t('pro_requested_slot')}: {app.time}</Text>
                     </View>
                   </View>
                 </View>
@@ -228,10 +239,10 @@ export default function ProfessionalAppointments() {
                     </View>
                     <View>
                       <Text style={styles.teleconsultText}>
-                        {isTeleconsultation ? "Virtual (Telehealth)" : "In-Person Clinic"}
+                        {isTeleconsultation ? t('pro_teleconsult_virtual') : t('pro_teleconsult_inperson')}
                       </Text>
                       <Text style={styles.teleconsultSubtext}>
-                        {isTeleconsultation ? "Generates secure meeting link" : "Kigali Mental Health Center"}
+                        {isTeleconsultation ? t('pro_teleconsult_link_gen') : t('pro_teleconsult_clinic')}
                       </Text>
                     </View>
                   </View>
@@ -262,14 +273,14 @@ export default function ProfessionalAppointments() {
                     onPress={() => handleDecline(app.id, app.patientName)}
                   >
                     <Ionicons name="close-circle-outline" size={16} color="#E74C3C" style={{ marginRight: 6 }} />
-                    <Text style={styles.dangerButtonText}>Decline</Text>
+                    <Text style={styles.dangerButtonText}>{t('pro_decline')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.actionButton, styles.successButton]}
                     onPress={() => handleAccept(app.id, app.patientName)}
                   >
                     <Ionicons name="checkmark-circle-outline" size={16} color={Colors.white} style={{ marginRight: 6 }} />
-                    <Text style={styles.primaryButtonText}>Accept Booking</Text>
+                    <Text style={styles.primaryButtonText}>{t('pro_accept_booking')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -279,8 +290,8 @@ export default function ProfessionalAppointments() {
               <View style={[styles.emptyCircle, { backgroundColor: '#EAF7EE' }]}>
                 <Ionicons name="checkmark-done-circle" size={32} color={Colors.positive} />
               </View>
-              <Text style={styles.emptyText}>All caught up!</Text>
-              <Text style={styles.emptySub}>No pending session requests to approve at the moment.</Text>
+              <Text style={styles.emptyText}>{t('pro_all_caught_up')}</Text>
+              <Text style={styles.emptySub}>{t('pro_no_pending')}</Text>
             </View>
           )
         )}
@@ -300,6 +311,25 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: Colors.white,
     ...Shadows.soft,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  langToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#E8F4FD',
+    borderWidth: 1,
+    borderColor: '#D2E6F9',
+  },
+  langText: {
+    color: Colors.primary,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
   logoRow: {
     flexDirection: 'row',
@@ -545,7 +575,8 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: Colors.white,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
+    flexShrink: 1,
   },
   secondaryButton: {
     backgroundColor: '#F1F5F9',
@@ -553,7 +584,8 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: Colors.text,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
+    flexShrink: 1,
   },
   dangerButton: {
     backgroundColor: '#FDF2F2',
@@ -563,7 +595,8 @@ const styles = StyleSheet.create({
   dangerButtonText: {
     color: '#E74C3C',
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
+    flexShrink: 1,
   },
   successButton: {
     backgroundColor: Colors.positive,

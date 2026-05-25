@@ -7,11 +7,12 @@ import { Colors, Shadows } from '../../src/constants/theme';
 import { ProfessionalProvider } from '../../src/contexts/ProfessionalContext';
 
 const TABS = [
-  { name: 'index', icon: 'grid-outline', iconActive: 'grid' },
-  { name: 'appointments', icon: 'calendar-outline', iconActive: 'calendar' },
-  { name: 'qa', icon: 'help-circle-outline', iconActive: 'help-circle' },
-  { name: 'inbox', icon: 'chatbubbles-outline', iconActive: 'chatbubbles' },
-  { name: 'profile', icon: 'person-outline', iconActive: 'person' },
+  { name: 'index',       icon: 'grid-outline',         iconActive: 'grid' },
+  { name: 'appointments', icon: 'calendar-outline',    iconActive: 'calendar' },
+  { name: 'community',   icon: 'people-outline',       iconActive: 'people' },
+  { name: 'qa',          icon: 'help-circle-outline',  iconActive: 'help-circle' },
+  { name: 'inbox',       icon: 'chatbubbles-outline',  iconActive: 'chatbubbles' },
+  { name: 'profile',     icon: 'person-outline',       iconActive: 'person' },
 ];
 
 function ProfessionalTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -61,6 +62,7 @@ export default function ProfessionalTabLayout() {
       >
         <Tabs.Screen name="index"        options={{ title: 'Dashboard' }} />
         <Tabs.Screen name="appointments" options={{ title: 'Appointments' }} />
+        <Tabs.Screen name="community"    options={{ title: 'Community' }} />
         <Tabs.Screen name="qa"           options={{ title: 'Q&A' }} />
         <Tabs.Screen name="inbox"        options={{ title: 'Inbox' }} />
         <Tabs.Screen name="profile"      options={{ title: 'Profile' }} />

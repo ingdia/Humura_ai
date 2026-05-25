@@ -5,10 +5,11 @@ import { router } from 'expo-router';
 
 interface User {
   id: number;
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   phone?: string;
   role: string;
+  specialization?: string;
   is_anonymous?: boolean;
 }
 

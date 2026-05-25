@@ -8,11 +8,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useProfessional, AvailabilityMatrix } from '../../src/contexts/ProfessionalContext';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 
 export default function ProfessionalProfile() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { t, language, setLanguage } = useLanguage();
   const { 
     profile, 
     updateProfile, 
@@ -77,11 +79,19 @@ export default function ProfessionalProfile() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoIcon}>
-            <Ionicons name="person" size={18} color="#fff" />
+        <View style={styles.headerTop}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoIcon}>
+              <Ionicons name="person" size={18} color="#fff" />
+            </View>
+            <Text style={styles.headerTitle}>{t('pro_profile_practice')}</Text>
           </View>
-          <Text style={styles.headerTitle}>Profile & Practice</Text>
+          <TouchableOpacity
+            style={styles.langToggle}
+            onPress={() => setLanguage(language === 'en' ? 'kn' : 'en')}
+          >
+            <Text style={styles.langText}>{language === 'en' ? 'KN' : 'EN'}</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.titleUnderline} />
       </View>
@@ -103,20 +113,20 @@ export default function ProfessionalProfile() {
               <Text style={styles.specialtyText}>{profile.specialization}</Text>
               <Text style={styles.bioText}>{profile.bio}</Text>
               
-              <TouchableOpacity 
-                style={styles.editBtn} 
+              <TouchableOpacity
+                style={styles.editBtn}
                 onPress={() => setIsEditing(true)}
                 activeOpacity={0.7}
               >
                 <Ionicons name="create" size={16} color={Colors.primary} />
-                <Text style={styles.editBtnText}>Edit Profile</Text>
+                <Text style={styles.editBtnText}>{t('pro_edit_profile')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <View style={styles.editForm}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Professional Name</Text>
-                <TextInput 
+                <Text style={styles.inputLabel}>{t('pro_professional_name')}</Text>
+                <TextInput
                   style={styles.textInput}
                   value={editedName}
                   onChangeText={setEditedName}
@@ -126,8 +136,8 @@ export default function ProfessionalProfile() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Specialization</Text>
-                <TextInput 
+                <Text style={styles.inputLabel}>{t('pro_specialization')}</Text>
+                <TextInput
                   style={styles.textInput}
                   value={editedSpecialty}
                   onChangeText={setEditedSpecialty}
@@ -137,8 +147,8 @@ export default function ProfessionalProfile() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Professional Bio</Text>
-                <TextInput 
+                <Text style={styles.inputLabel}>{t('pro_professional_bio')}</Text>
+                <TextInput
                   style={[styles.textInput, styles.textArea]}
                   value={editedBio}
                   onChangeText={setEditedBio}
@@ -150,7 +160,7 @@ export default function ProfessionalProfile() {
               </View>
 
               <View style={styles.formRow}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.formBtn, styles.cancelBtn]}
                   onPress={() => {
                     setEditedName(profile.name);
@@ -162,15 +172,15 @@ export default function ProfessionalProfile() {
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                  <Text style={styles.cancelBtnText}>{t('pro_cancel')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.formBtn, styles.saveBtn]}
                   onPress={handleSaveProfile}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.saveBtnText}>Save</Text>
+                  <Text style={styles.saveBtnText}>{t('pro_save')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -179,13 +189,13 @@ export default function ProfessionalProfile() {
 
         {/* PRACTICE DETAILS */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Practice Settings</Text>
+          <Text style={styles.sectionTitle}>{t('pro_practice_settings')}</Text>
           <View style={styles.card}>
             {isEditing ? (
               <View style={{ padding: Spacing.md }}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Clinic Affiliation</Text>
-                  <TextInput 
+                  <Text style={styles.inputLabel}>{t('pro_clinic_affiliation')}</Text>
+                  <TextInput
                     style={styles.textInput}
                     value={editedClinic}
                     onChangeText={setEditedClinic}
@@ -194,8 +204,8 @@ export default function ProfessionalProfile() {
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Hourly Therapy Rate</Text>
-                  <TextInput 
+                  <Text style={styles.inputLabel}>{t('pro_hourly_rate')}</Text>
+                  <TextInput
                     style={styles.textInput}
                     value={editedRate}
                     onChangeText={setEditedRate}
@@ -209,7 +219,7 @@ export default function ProfessionalProfile() {
                 <View style={styles.cardRow}>
                   <View style={styles.cardRowLeft}>
                     <Ionicons name="business" size={20} color={Colors.tabInactive} />
-                    <Text style={styles.cardRowLabel}>Clinic Affiliation</Text>
+                    <Text style={styles.cardRowLabel}>{t('pro_clinic_affiliation')}</Text>
                   </View>
                   <Text style={styles.cardRowValue}>{profile.clinic}</Text>
                 </View>
@@ -217,7 +227,7 @@ export default function ProfessionalProfile() {
                 <View style={styles.cardRow}>
                   <View style={styles.cardRowLeft}>
                     <Ionicons name="cash" size={20} color={Colors.tabInactive} />
-                    <Text style={styles.cardRowLabel}>Hourly Therapy Rate</Text>
+                    <Text style={styles.cardRowLabel}>{t('pro_hourly_rate')}</Text>
                   </View>
                   <Text style={styles.cardRowValue}>{profile.rate}</Text>
                 </View>
@@ -228,8 +238,8 @@ export default function ProfessionalProfile() {
 
         {/* AVAILABILITY SCHEDULER MATRIX */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Availability</Text>
-          <Text style={styles.sectionHelperText}>Set active work hours for student/patient calendar bookings.</Text>
+          <Text style={styles.sectionTitle}>{t('pro_weekly_availability')}</Text>
+          <Text style={styles.sectionHelperText}>{t('pro_availability_sub')}</Text>
           
           <View style={styles.card}>
             {weekdays.map((day, index) => {
@@ -265,7 +275,7 @@ export default function ProfessionalProfile() {
                       </View>
                     ) : (
                       <View style={[styles.hoursBox, { backgroundColor: '#F3F6FA', borderColor: '#E5E9F0' }]}>
-                        <Text style={styles.hoursOfflineText}>Unavailable</Text>
+                        <Text style={styles.hoursOfflineText}>{t('pro_unavailable')}</Text>
                       </View>
                     )}
                   </View>
@@ -283,7 +293,7 @@ export default function ProfessionalProfile() {
           activeOpacity={0.8}
         >
           <Ionicons name="log-out" size={20} color="#F44336" />
-          <Text style={styles.logoutText}>End Professional Session</Text>
+          <Text style={styles.logoutText}>{t('pro_end_session')}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -304,6 +314,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     ...Shadows.soft,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  langToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#E8F4FD',
+    borderWidth: 1,
+    borderColor: '#D2E6F9',
+  },
+  langText: {
+    color: Colors.primary,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -313,7 +342,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#9B59B6',
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -325,7 +354,7 @@ const styles = StyleSheet.create({
   titleUnderline: {
     width: 32,
     height: 4,
-    backgroundColor: '#9B59B6',
+    backgroundColor: Colors.primary,
     borderRadius: 2,
     marginTop: 8,
   },

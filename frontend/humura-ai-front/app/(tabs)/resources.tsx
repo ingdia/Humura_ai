@@ -11,60 +11,60 @@ import { useLanguage } from '../../src/contexts/LanguageContext';
 const { width, height } = Dimensions.get('window');
 
 const RESOURCES = [
-  { 
-    id: '1', 
-    title: 'Help for Teen Mothers', 
+  {
+    id: '1',
+    title: 'Help for Teen Mothers',
     titleK: 'Ubufasha ku bangavu babyaye',
     category: 'Health',
     categoryK: 'Ubuzima',
     image: 'https://images.unsplash.com/photo-1551030173-122adabc44f9?auto=format&fit=crop&w=800&q=80',
     readTime: '10 min',
     content: 'Teen mothers and their babies face significant challenges. It is essential to seek medical support at Isange One Stop Center (3029) or local health centers. Safe support is key—talk to an SRH specialist or a peer counselor.',
-    contentK: 'Umwana w’umwangavu n’umwana we bakunze guhura n’ibibazo bikomeye iyo babuze ubufasha. Ubufasha bw’ubuzima ni ingenzi: Mujyane kwa muganga cyangwa kuri Isange One Stop Center (3029).',
+    contentK: "Umwana w'umwangavu n'umwana we bakunze guhura n'ibibazo bikomeye iyo babuze ubufasha. Ubufasha bw'ubuzima ni ingenzi: Mujyane kwa muganga cyangwa kuri Isange One Stop Center (3029).",
   },
-  { 
-    id: '2', 
-    title: 'Know Your Legal Rights', 
+  {
+    id: '2',
+    title: 'Know Your Legal Rights',
     titleK: 'Menya uburenganzira bwawe',
     category: 'Legal',
     categoryK: 'Amategeko',
     image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=800&q=80',
     readTime: '6 min',
-    content: 'If you have faced violence or been forced into pregnancy, legal aid is available for free. Isange One Stop Center (3029) and MAJ (Maison d’Accès à la Justice) are here to protect you.',
-    contentK: 'Niba yatewe inda atabishaka cyangwa yarahohotewe, Isange (3029) na MAJ (Maison d’Accès à la Justice) bamufasha mu mategeko kubuntu.',
+    content: "If you have faced violence or been forced into pregnancy, legal aid is available for free. Isange One Stop Center (3029) and MAJ (Maison d'Accès à la Justice) are here to protect you.",
+    contentK: "Niba yatewe inda atabishaka cyangwa yarahohotewe, Isange (3029) na MAJ (Maison d'Accès à la Justice) bamufasha mu mategeko kubuntu.",
   },
-  { 
-    id: '3', 
-    title: 'Safe Protection', 
+  {
+    id: '3',
+    title: 'Safe Protection',
     titleK: 'Kwirinda inda zitateganyijwe',
     category: 'Health',
     categoryK: 'Ubuzima',
     image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
     readTime: '5 min',
     content: 'Knowledge is your first line of defense. Understanding contraception and your reproductive rights allows you to make safe choices for your future.',
-    contentK: 'Ubumenyi ni intwaro ikomeye. Gusobanukirwa uburyo bwo kwirinda inda zitateganyijwe n’uburenganzira bwawe bigufasha gufata imyanzuro myiza ku bwa kazoza kawe.',
+    contentK: "Ubumenyi ni intwaro ikomeye. Gusobanukirwa uburyo bwo kwirinda inda zitateganyijwe n'uburenganzira bwawe bigufasha gufata imyanzuro myiza ku bwa kazoza kawe.",
   },
-  { 
-    id: '4', 
-    title: 'Return to School', 
+  {
+    id: '4',
+    title: 'Return to School',
     titleK: 'Gusubira mu ishuri',
     category: 'Education',
     categoryK: 'Uburezi',
     image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80',
     readTime: '7 min',
     content: 'Education is your right. Even as a young mother, you can return to school. Talk to your teachers and find support programs like Imbuto Foundation.',
-    contentK: 'Uburezi ni uburenganzira bwawe. Nubwo waba uri umubyeyi ukiri muto, ushobora gusubira mu ishuri. Ganira n’abarimu bawe n’imiryango nka Imbuto Foundation.',
+    contentK: "Uburezi ni uburenganzira bwawe. Nubwo waba uri umubyeyi ukiri muto, ushobora gusubira mu ishuri. Ganira n'abarimu bawe n'imiryango nka Imbuto Foundation.",
   },
-  { 
-    id: '5', 
-    title: 'Vocational Training', 
-    titleK: 'Amahugurwa y’imyuga',
+  {
+    id: '5',
+    title: 'Vocational Training',
+    titleK: "Amahugurwa y'imyuga",
     category: 'Skills',
     categoryK: 'Ubumenyi',
     image: 'https://images.unsplash.com/photo-1520004434532-668416a0c78d?auto=format&fit=crop&w=800&q=80',
     readTime: '8 min',
     content: 'Learn a trade to build your future. Tailoring, hair styling, and digital skills are available through local NGOs and government centers.',
-    contentK: 'Iga umwuga wagufasha kwiteza imbere. Kudoda, gusuka, n’ikoranabuhanga bishobora kwigwa binyuze mu miryango itegamiye kuri Leta.',
+    contentK: "Iga umwuga wagufasha kwiteza imbere. Kudoda, gusuka, n'ikoranabuhanga bishobora kwigwa binyuze mu miryango itegamiye kuri Leta.",
   },
 ];
 
@@ -99,7 +99,7 @@ export default function ResourcesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      
+
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>{t('resources_title')}</Text>
@@ -143,7 +143,7 @@ export default function ResourcesScreen() {
             <Text style={styles.modalHeaderTitle}>{language === 'en' ? selectedArticle?.category : selectedArticle?.categoryK}</Text>
             <TouchableOpacity style={styles.modalBack}><Ionicons name="share-outline" size={22} color={Colors.text} /></TouchableOpacity>
           </View>
-          
+
           <ScrollView showsVerticalScrollIndicator={false}>
             {selectedArticle && (
               <>
@@ -157,18 +157,18 @@ export default function ResourcesScreen() {
                     <Text style={styles.modalTime}>By Humura Team</Text>
                   </View>
                   <Text style={styles.modalContent}>{language === 'en' ? selectedArticle.content : selectedArticle.contentK}</Text>
-                  
+
                   <View style={styles.storyCard}>
                     <Image source={{ uri: 'https://images.unsplash.com/photo-1516589174184-c685266e430c?auto=format&fit=crop&w=600&q=80' }} style={styles.storyImage} />
                     <Text style={styles.storyCaption}>
-                      {language === 'en' ? 'Speak out. You are not alone.' : 'Kuvuga s’ugusebanya. Ni ukwikiza.'}
+                      {language === 'en' ? 'Speak out. You are not alone.' : "Kuvuga s'ugusebanya. Ni ukwikiza."}
                     </Text>
                   </View>
 
                   <Text style={styles.modalContent}>
-                    {language === 'en' 
-                      ? 'Remember, you are never alone. If you have been affected by these issues, call 3029 (Isange) or 3530 (Youth Line) for free support in Rwanda.' 
-                      : 'Ibuka ko utari wenyine. Niba uhuye n’ibi bibazo, hamagara 3029 (Isange) cyangwa 3530 (Urungano) uone ubufasha kubuntu mu Rwanda.'}
+                    {language === 'en'
+                      ? 'Remember, you are never alone. If you have been affected by these issues, call 3029 (Isange) or 3530 (Youth Line) for free support in Rwanda.'
+                      : 'Ibuka ko utari wenyine. Niba uhuye n\'ibi bibazo, hamagara 3029 (Isange) cyangwa 3530 (Urungano) uone ubufasha kubuntu mu Rwanda.'}
                   </Text>
                 </View>
               </>

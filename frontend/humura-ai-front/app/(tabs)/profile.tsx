@@ -2,84 +2,22 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, SafeAreaView, StatusBar, Switch,
-  Linking, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Image
+  Linking, TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../src/contexts/AuthContext';
 import { Colors, Shadows } from '../../src/constants/theme';
 import { useLanguage } from '../../src/contexts/LanguageContext';
 
-type Slot = { time: string; available: boolean };
-
-type Specialist = {
-  id: string;
-  name: string;
-  role: string;
-  roleLabel: string;
-  roleLabelK: string;
-  icon: string;
-  color: string;
-  phone: string;
-  slots?: Slot[];
-};
-
-const SPECIALISTS: Specialist[] = [
-  {
-    id: '1',
-    name: 'Dr. Amina Uwase',
-    role: 'srh_specialist',
-    roleLabel: 'SRH Specialist',
-    roleLabelK: 'Inzobere muri SRH',
-    icon: 'heart',
-    color: '#4a90e2',
-    phone: '+250 788 123 456',
-    slots: [
-      { time: 'Today  9:00 AM',  available: true  },
-      { time: 'Today  2:00 PM',  available: true  },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Nurse Grace Nkusi',
-    role: 'social_worker',
-    roleLabel: 'SRH Counselor',
-    roleLabelK: 'Umujyanama muri SRH',
-    icon: 'medical',
-    color: '#27AE60',
-    phone: '+250 788 654 321',
-  },
-  {
-    id: '3',
-    name: 'Keza',
-    role: 'peer_support',
-    roleLabel: 'Peer Support',
-    roleLabelK: 'Ubufasha bwa bagenzi bawe',
-    icon: 'people',
-    color: '#8E44AD',
-    phone: '+250 788 999 888',
-    slots: [
-      { time: 'Tomorrow 10:00 AM', available: true },
-      { time: 'Tomorrow 3:00 PM',  available: true  },
-    ],
-  },
-];
-
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { t, language, setLanguage } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const router = useRouter();
-  const [notifications, setNotifications]   = useState(true);
-  const [anonymous, setAnonymous]           = useState(true);
-  
-  const [selectedSpec, setSelectedSpec] = useState<Specialist | null>(null);
-  const [messagingSpec, setMessagingSpec] = useState<Specialist | null>(null);
-  const [messageText, setMessageText] = useState('');
-  
-  const [phone, setPhone] = useState(user?.phone || '+250 788 000 000');
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const [name, setName] = useState(user?.name || (language === 'en' ? 'Anonymous User' : 'Uwakoresha Utazwi'));
+  const [notifications, setNotifications] = useState(true);
+  const [anonymous, setAnonymous]         = useState(true);
+  const isAnonymous = !!user?.is_anonymous;
+  const [name, setName]                   = useState(user?.name || (language === 'en' ? 'Anonymous User' : 'Uwakoresha Utazwi'));
   const [isEditingName, setIsEditingName] = useState(false);
 
   const STATS = [
@@ -88,117 +26,9 @@ export default function ProfileScreen() {
     { label: language === 'en' ? 'Safe Discussions' : 'Ibiganiro', value: '12',   icon: 'chatbubbles', color: '#27AE60' },
   ];
 
-  const CONVERSATIONS = [
-    { id: '1', name: 'Dr. Amina Uwase', role: 'Clinical Psychologist', lastMessage: 'I am here for you.', time: '10:06 AM', unread: 0, photo: 'https://images.unsplash.com/photo-1594824432258-29367468817d?auto=format&fit=crop&w=200&q=80' },
-    { id: '2', name: 'Nurse Grace Nkusi', role: 'SRH Nurse', lastMessage: 'Please come by the clinic tomorrow.', time: 'Yesterday', unread: 2, photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=200&q=80' },
-  ];
-
-  const handleAction = (type: 'message' | 'call' | 'book', spec: Specialist) => {
-    if (type === 'call') {
-      Linking.openURL(`tel:${spec.phone.replace(/\s/g, '')}`);
-    } else if (type === 'message') {
-      setMessagingSpec(spec);
-    } else if (type === 'book') {
-      setSelectedSpec(spec);
-    }
-  };
-
-  const sendMessage = () => {
-    if (!messageText.trim()) return;
-    Alert.alert(
-      language === 'en' ? 'Message Sent' : 'Ubutumwa bwoherejwe',
-      language === 'en' ? `Your message has been sent to ${messagingSpec?.name}. They will respond shortly.` : `Ubutumwa bwawe bwoherejwe kuri ${messagingSpec?.name}. Azagusubiza vuba.`
-    );
-    setMessageText('');
-    setMessagingSpec(null);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-
-      {/* Booking Modal */}
-      <Modal visible={!!selectedSpec} transparent animationType="slide">
-        <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selectedSpec?.name}</Text>
-              <TouchableOpacity onPress={() => setSelectedSpec(null)}>
-                <Ionicons name="close" size={24} color={Colors.text} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.modalSub}>{language === 'en' ? 'Select an appointment time' : 'Hitamo igihe cya gahunda'}</Text>
-
-            {selectedSpec?.slots?.map((slot, i) => (
-              <TouchableOpacity
-                key={i}
-                style={styles.slotBtn}
-                onPress={() => {
-                  Alert.alert('Booked!', `Session confirmed for ${slot.time}`);
-                  setSelectedSpec(null);
-                }}
-              >
-                <Text style={styles.slotTime}>{slot.time}</Text>
-                <Ionicons name="chevron-forward" size={18} color={Colors.primary} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Messaging Modal */}
-      <Modal visible={!!messagingSpec} animationType="slide">
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
-            style={{ flex: 1 }}
-          >
-            <View style={styles.msgHeader}>
-              <TouchableOpacity onPress={() => setMessagingSpec(null)} style={styles.backBtnSmall}>
-                <Ionicons name="chevron-back" size={24} color={Colors.text} />
-              </TouchableOpacity>
-              <View style={styles.msgHeaderInfo}>
-                <Text style={styles.msgHeaderName}>{messagingSpec?.name}</Text>
-                <Text style={styles.msgHeaderStatus}>{language === 'en' ? 'Online' : 'Arahari'}</Text>
-              </View>
-              <View style={{ width: 40 }} />
-            </View>
-
-            <ScrollView 
-              style={styles.msgBody} 
-              contentContainerStyle={{ padding: 20 }}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={styles.systemMsg}>
-                <Ionicons name="lock-closed" size={14} color={Colors.textMuted} style={{ marginBottom: 8 }} />
-                <Text style={styles.systemMsgText}>
-                  {language === 'en' 
-                    ? `You are starting a private conversation with ${messagingSpec?.name}. This chat is confidential and safe.` 
-                    : `Ugiye gutangira ikiganiro cy’ibanga na ${messagingSpec?.name}. Ibi biganiro ni ibanga kandi birinzwe.`}
-                </Text>
-              </View>
-            </ScrollView>
-
-            <View style={styles.msgInputRow}>
-              <TextInput
-                style={styles.msgInput}
-                placeholder={language === 'en' ? "Type your message..." : "Andika ubutumwa..."}
-                value={messageText}
-                onChangeText={setMessageText}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity 
-                style={[styles.sendBtn, !messageText.trim() && { backgroundColor: '#E2E8F0' }]} 
-                onPress={sendMessage}
-                disabled={!messageText.trim()}
-              >
-                <Ionicons name="send" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         
@@ -211,13 +41,17 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {isEditingName ? (
+          {isAnonymous ? (
+            <View style={styles.nameDisplay}>
+              <Text style={styles.username}>{name}</Text>
+            </View>
+          ) : isEditingName ? (
             <View style={styles.editNameRow}>
-              <TextInput 
-                style={styles.nameInput} 
-                value={name} 
-                onChangeText={setName} 
-                autoFocus 
+              <TextInput
+                style={styles.nameInput}
+                value={name}
+                onChangeText={setName}
+                autoFocus
               />
               <TouchableOpacity onPress={() => setIsEditingName(false)} style={styles.saveSmallBtn}>
                 <Ionicons name="checkmark" size={16} color="#fff" />
@@ -229,30 +63,13 @@ export default function ProfileScreen() {
               <Ionicons name="pencil" size={14} color={Colors.primary} style={{ marginLeft: 8 }} />
             </TouchableOpacity>
           )}
+          {isAnonymous && (
+            <View style={styles.anonIdBadge}>
+              <Ionicons name="finger-print-outline" size={13} color={Colors.primary} />
+              <Text style={styles.anonIdText}>Your unique login ID — save it</Text>
+            </View>
+          )}
           
-          <View style={styles.phoneSection}>
-            {isEditingPhone ? (
-              <View style={styles.phoneInputRow}>
-                <TextInput 
-                  style={styles.phoneInput} 
-                  value={phone} 
-                  onChangeText={setPhone} 
-                  keyboardType="phone-pad"
-                  autoFocus
-                />
-                <TouchableOpacity onPress={() => setIsEditingPhone(false)} style={styles.savePhoneBtn}>
-                  <Text style={styles.savePhoneText}>{language === 'en' ? 'Save' : 'Bika'}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity style={styles.phoneDisplay} onPress={() => setIsEditingPhone(true)}>
-                <Ionicons name="call-outline" size={14} color={Colors.textMuted} />
-                <Text style={styles.phoneText}>{phone}</Text>
-                <Ionicons name="pencil" size={12} color={Colors.primary} style={{ marginLeft: 4 }} />
-              </TouchableOpacity>
-            )}
-          </View>
-
           <View style={styles.headerLangRow}>
             <TouchableOpacity 
               style={[styles.headerLangBtn, language === 'en' && styles.headerLangBtnActive]} 
@@ -282,67 +99,20 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Messages Inbox */}
+        {/* Messages shortcut */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{language === 'en' ? 'My Messages' : 'Ubutumwa bwanjye'}</Text>
-          <Text style={styles.sectionSub}>{language === 'en' ? 'Your private conversations' : 'Ibiganiro byawe bwite'}</Text>
-
-          {CONVERSATIONS.map(conv => (
-            <TouchableOpacity key={conv.id} style={styles.convRow} onPress={() => router.push(`/thread/${conv.id}` as any)}>
-              <Image source={{ uri: conv.photo }} style={styles.convPhoto} />
-              <View style={styles.convInfo}>
-                <View style={styles.convHeader}>
-                  <Text style={styles.convName}>{conv.name}</Text>
-                  <Text style={[styles.convTime, conv.unread > 0 && { color: Colors.primary, fontWeight: '800' }]}>{conv.time}</Text>
-                </View>
-                <Text style={styles.convRole}>{conv.role}</Text>
-                <Text style={[styles.convLastMessage, conv.unread > 0 && { fontWeight: '700', color: Colors.text }]} numberOfLines={1}>{conv.lastMessage}</Text>
-              </View>
-              {conv.unread > 0 && (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadText}>{conv.unread}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Professional Support Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{language === 'en' ? 'Professional Support' : 'Ubufasha bw’inzobere'}</Text>
-          <Text style={styles.sectionSub}>{language === 'en' ? 'Directly message, call, or book a session.' : 'Andika, hamagara, cyangwa fashisha gahunda.'}</Text>
-
-          {SPECIALISTS.map(spec => (
-            <View key={spec.id} style={styles.specCard}>
-              <View style={styles.specHeader}>
-                <View style={[styles.specIcon, { backgroundColor: spec.color + '15' }]}>
-                  <Ionicons name={spec.icon as any} size={24} color={spec.color} />
-                </View>
-                <View>
-                  <Text style={styles.specName}>{spec.name}</Text>
-                  <Text style={[styles.specRole, { color: spec.color }]}>{language === 'en' ? spec.roleLabel : spec.roleLabelK}</Text>
-                </View>
-              </View>
-
-              <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('message', spec)}>
-                  <Ionicons name="chatbubble" size={16} color={Colors.primary} />
-                  <Text style={styles.actionBtnText}>{language === 'en' ? 'Message' : 'Andika'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('call', spec)}>
-                  <Ionicons name="call" size={16} color={Colors.primary} />
-                  <Text style={styles.actionBtnText}>{language === 'en' ? 'Call' : 'Hamagara'}</Text>
-                </TouchableOpacity>
-                
-                {spec.role !== 'social_worker' && (
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction('book', spec)}>
-                    <Ionicons name="calendar" size={16} color={Colors.primary} />
-                    <Text style={styles.actionBtnText}>{language === 'en' ? 'Book' : 'Gahunda'}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+          <Text style={styles.sectionTitle}>{language === 'en' ? 'Professional Support' : "Ubufasha bw'inzobere"}</Text>
+          <Text style={styles.sectionSub}>{language === 'en' ? 'Chat privately with a specialist.' : "Vugana mu ibanga n'inzobere."}</Text>
+          <TouchableOpacity style={styles.msgShortcut} onPress={() => router.push('/messages' as any)}>
+            <View style={styles.msgShortcutIcon}>
+              <Ionicons name="chatbubbles" size={22} color={Colors.primary} />
             </View>
-          ))}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.msgShortcutTitle}>{language === 'en' ? 'My Conversations' : 'Ibiganiro byanjye'}</Text>
+              <Text style={styles.msgShortcutSub}>{language === 'en' ? 'View messages and start new chats' : 'Reba no gutangira ibiganiro bishya'}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         {/* Nearby Clinics Preview */}
@@ -396,6 +166,16 @@ export default function ProfileScreen() {
             <Switch value={notifications} onValueChange={setNotifications} />
           </View>
           
+          {isAnonymous && (
+            <View style={styles.logoutIdReminder}>
+              <Ionicons name="information-circle-outline" size={16} color="#F59E0B" />
+              <Text style={styles.logoutIdReminderText}>
+                {language === 'en'
+                  ? `To return, use: ${name}`
+                  : `Kugirango ugaruke, koresha: ${name}`}
+              </Text>
+            </View>
+          )}
           <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
             <Ionicons name="log-out-outline" size={20} color="#F44336" />
             <Text style={styles.logoutText}>{language === 'en' ? 'Logout' : 'Sohoka'}</Text>
@@ -421,14 +201,6 @@ const styles = StyleSheet.create({
   nameInput: { fontSize: 20, fontWeight: '800', color: Colors.text, borderBottomWidth: 1, borderBottomColor: Colors.primary, minWidth: 150, textAlign: 'center' },
   saveSmallBtn: { backgroundColor: Colors.primary, width: 30, height: 30, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
 
-  phoneSection: { marginTop: 12 },
-  phoneDisplay: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  phoneText: { fontSize: 13, color: Colors.textMuted, fontWeight: '600' },
-  phoneInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  phoneInput: { backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, fontSize: 13, minWidth: 140, fontWeight: '600', color: Colors.text },
-  savePhoneBtn: { backgroundColor: Colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  savePhoneText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-
   headerLangRow: { flexDirection: 'row', marginTop: 24, backgroundColor: '#F1F5F9', borderRadius: 20, padding: 4 },
   headerLangBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 18 },
   headerLangBtnActive: { backgroundColor: Colors.white, ...Shadows.soft },
@@ -445,22 +217,30 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '900', color: Colors.text, marginBottom: 4 },
   sectionSub: { fontSize: 14, color: Colors.textMuted, marginBottom: 20, fontWeight: '500' },
 
-  specCard: { marginBottom: 24, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', paddingBottom: 20 },
-  specHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-  specIcon: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  specName: { fontSize: 17, fontWeight: '800', color: Colors.text },
-  specRole: { fontSize: 13, fontWeight: '700', marginTop: 2 },
-
-  actionRow: { flexDirection: 'row', gap: 8 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC', paddingVertical: 10, borderRadius: 12, gap: 6, borderWidth: 1, borderColor: '#E2E8F0' },
-  actionBtnText: { fontSize: 12, fontWeight: '800', color: Colors.text },
+  msgShortcut: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#F0F7FF', padding: 16, borderRadius: 18,
+    borderWidth: 1, borderColor: '#D4E6FC',
+  },
+  msgShortcutIcon: {
+    width: 46, height: 46, borderRadius: 14,
+    backgroundColor: '#E0EFFE', justifyContent: 'center', alignItems: 'center',
+  },
+  msgShortcutTitle: { fontSize: 15, fontWeight: '800', color: Colors.text, marginBottom: 2 },
+  msgShortcutSub: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
 
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   settingLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   settingText: { fontSize: 15, fontWeight: '700', color: Colors.text },
   
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, paddingVertical: 14, backgroundColor: '#FFF5F5', borderRadius: 16, gap: 10 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, paddingVertical: 14, backgroundColor: '#FFF5F5', borderRadius: 16, gap: 10 },
   logoutText: { color: '#F44336', fontWeight: '800', fontSize: 15 },
+
+  anonIdBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6, backgroundColor: '#EBF4FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  anonIdText: { fontSize: 11, color: Colors.primary, fontWeight: '700' },
+
+  logoutIdReminder: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFBEB', padding: 12, borderRadius: 14, marginTop: 16, borderWidth: 1, borderColor: '#FDE68A' },
+  logoutIdReminderText: { flex: 1, fontSize: 13, color: '#92400E', fontWeight: '600' },
 
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   viewAllLink: { fontSize: 12, color: Colors.primary, fontWeight: '800' },
@@ -469,35 +249,4 @@ const styles = StyleSheet.create({
   miniClinicName: { fontSize: 14, fontWeight: '800', color: Colors.text },
   miniClinicDist: { fontSize: 11, color: Colors.textMuted, fontWeight: '700', marginTop: 2 },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: Colors.white, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 20, fontWeight: '900', color: Colors.text },
-  modalSub: { fontSize: 14, color: Colors.textMuted, marginBottom: 24 },
-  slotBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#F8FAFC', borderRadius: 16, marginBottom: 12 },
-  slotTime: { fontSize: 16, fontWeight: '700', color: Colors.text },
-
-  // Messaging Styles
-  msgHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  backBtnSmall: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center' },
-  msgHeaderInfo: { alignItems: 'center' },
-  msgHeaderName: { fontSize: 17, fontWeight: '800', color: Colors.text },
-  msgHeaderStatus: { fontSize: 12, color: '#27AE60', fontWeight: '700' },
-  msgBody: { flex: 1 },
-  systemMsg: { backgroundColor: '#F8FAFC', padding: 20, borderRadius: 24, marginBottom: 20, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
-  systemMsgText: { fontSize: 13, color: Colors.textMuted, textAlign: 'center', lineHeight: 20, fontWeight: '600' },
-  msgInputRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#fff' },
-  msgInput: { flex: 1, backgroundColor: '#F1F5F9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: Colors.text, maxHeight: 120 },
-  sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center', ...Shadows.soft },
-
-  convRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9', gap: 12 },
-  convPhoto: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#E2E8F0' },
-  convInfo: { flex: 1, justifyContent: 'center' },
-  convHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  convName: { fontSize: 16, fontWeight: '800', color: Colors.text },
-  convTime: { fontSize: 11, color: Colors.textMuted },
-  convRole: { fontSize: 12, color: Colors.primary, fontWeight: '600', marginBottom: 2 },
-  convLastMessage: { fontSize: 13, color: Colors.textMuted },
-  unreadBadge: { width: 22, height: 22, borderRadius: 11, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' },
-  unreadText: { color: '#fff', fontSize: 10, fontWeight: '900' },
 });

@@ -8,10 +8,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useProfessional } from '../../src/contexts/ProfessionalContext';
+import { useLanguage } from '../../src/contexts/LanguageContext';
+import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function ProfessionalDashboard() {
   const router = useRouter();
-  const { profile, appointments, questions, chats } = useProfessional();
+  const { appointments, questions, chats } = useProfessional();
+  const { t, language, setLanguage } = useLanguage();
+  const { user } = useAuth();
+
+  const displayName = user?.name ?? 'Doctor';
+  const displayRole = user?.specialization ?? 'Health Professional';
+
+  const translateType = (type: string) => {
+    if (type.toLowerCase().includes('initial')) return t('appt_initial');
+    if (type.toLowerCase().includes('follow')) return t('appt_followup');
+    if (type.toLowerCase().includes('stress')) return t('appt_stress');
+    return t('appt_general');
+  };
 
   // Calculate dynamic stats
   const confirmedCount = appointments.filter(a => a.status === 'CONFIRMED').length;
@@ -25,32 +39,32 @@ export default function ProfessionalDashboard() {
     {
       tab: '/(professional-tabs)/appointments',
       icon: 'calendar',
-      title: 'Schedule',
-      desc: 'Manage bookings',
+      title: t('pro_schedule'),
+      desc: t('pro_manage_bookings'),
       color: '#4a90e2',
       bgColor: '#E8F4FD'
     },
     {
       tab: '/(professional-tabs)/qa',
       icon: 'help-circle',
-      title: 'Q&A Forum',
-      desc: 'Answer inquiries',
+      title: t('pro_qa_forum'),
+      desc: t('pro_answer_inquiries'),
       color: '#F39C12',
       bgColor: '#FEF3E6'
     },
     {
       tab: '/(professional-tabs)/inbox',
       icon: 'chatbubbles',
-      title: 'Inbox',
-      desc: `${unreadChats} unread chat${unreadChats === 1 ? '' : 's'}`,
+      title: t('pro_inbox_label'),
+      desc: `${unreadChats} unread`,
       color: '#27AE60',
       bgColor: '#EAF7EE'
     },
     {
       tab: '/(professional-tabs)/profile',
       icon: 'time',
-      title: 'Availability',
-      desc: 'Set weekly hours',
+      title: t('pro_availability'),
+      desc: t('pro_set_hours'),
       color: '#9B59B6',
       bgColor: '#F5EEF8'
     }
@@ -79,17 +93,25 @@ export default function ProfessionalDashboard() {
                 <Text style={styles.logoText}>Humura Pro</Text>
               </View>
 
-              <TouchableOpacity 
-                style={styles.profileBtn} 
-                onPress={() => router.push('/(professional-tabs)/profile')}
-              >
-                <Ionicons name="person" size={17} color={Colors.primary} />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TouchableOpacity
+                  style={styles.langToggle}
+                  onPress={() => setLanguage(language === 'en' ? 'kn' : 'en')}
+                >
+                  <Text style={styles.langText}>{language === 'en' ? 'KN' : 'EN'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.profileBtn} 
+                  onPress={() => router.push('/(professional-tabs)/profile')}
+                >
+                  <Ionicons name="person" size={17} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <Text style={styles.heroGreeting}>Welcome back 🌟</Text>
-            <Text style={styles.heroName}>{profile.name}</Text>
-            <Text style={styles.heroSubtitle}>{profile.specialization}</Text>
+            <Text style={styles.heroGreeting}>{t('pro_welcome_back')}</Text>
+            <Text style={styles.heroName}>{displayName}</Text>
+            <Text style={styles.heroSubtitle}>{displayRole}</Text>
           </LinearGradient>
         </ImageBackground>
 
@@ -105,7 +127,7 @@ export default function ProfessionalDashboard() {
                 <Ionicons name="calendar" size={22} color={Colors.primary} />
               </View>
               <Text style={styles.statValue}>{confirmedCount}</Text>
-              <Text style={styles.statLabel}>Active Sessions</Text>
+              <Text style={styles.statLabel}>{t('pro_active_sessions')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -117,21 +139,21 @@ export default function ProfessionalDashboard() {
                 <Ionicons name="help-circle" size={22} color="#F39C12" />
               </View>
               <Text style={styles.statValue}>{pendingQA}</Text>
-              <Text style={styles.statLabel}>Pending Q&A</Text>
+              <Text style={styles.statLabel}>{t('pro_pending_qa')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* NEXT UPCOMING SESSION */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
+          <Text style={styles.sectionTitle}>{t('pro_upcoming_sessions')}</Text>
           {nextSession ? (
             <View style={styles.appointmentCard}>
               <View style={styles.appointmentHeader}>
                 <Text style={styles.appointmentTime}>{nextSession.time}</Text>
                 <View style={[styles.statusBadge, nextSession.isVirtual ? styles.virtualBadge : styles.clinicBadge]}>
                   <Text style={[styles.statusText, nextSession.isVirtual ? styles.virtualText : styles.clinicText]}>
-                    {nextSession.isVirtual ? 'Virtual' : 'In-Person'}
+                    {nextSession.isVirtual ? t('pro_virtual') : t('pro_in_person')}
                   </Text>
                 </View>
               </View>
@@ -142,7 +164,7 @@ export default function ProfessionalDashboard() {
                   </View>
                   <View>
                     <Text style={styles.patientName}>{nextSession.patientName}</Text>
-                    <Text style={styles.patientType}>{nextSession.type}</Text>
+                    <Text style={styles.patientType}>{translateType(nextSession.type)}</Text>
                   </View>
                 </View>
                 {nextSession.isVirtual && (
@@ -151,7 +173,7 @@ export default function ProfessionalDashboard() {
                     onPress={() => router.push('/(professional-tabs)/appointments')}
                   >
                     <Ionicons name="videocam" size={18} color={Colors.white} />
-                    <Text style={styles.meetButtonText}>Join Meet</Text>
+                    <Text style={styles.meetButtonText}>{t('pro_join_meet')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -159,15 +181,15 @@ export default function ProfessionalDashboard() {
           ) : (
             <View style={styles.emptyCard}>
               <Ionicons name="happy-outline" size={40} color={Colors.tabInactive} style={{ marginBottom: 8 }} />
-              <Text style={styles.emptyCardText}>No upcoming sessions for today.</Text>
-              <Text style={styles.emptyCardSub}>Take some time to review resources or respond to Q&As!</Text>
+              <Text style={styles.emptyCardText}>{t('pro_no_sessions')}</Text>
+              <Text style={styles.emptyCardSub}>{t('pro_no_sessions_sub')}</Text>
             </View>
           )}
         </View>
 
         {/* QUICK ACTIONS TOOLGRID */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Professional Toolkit</Text>
+          <Text style={styles.sectionTitle}>{t('pro_toolkit')}</Text>
           <View style={styles.grid}>
             {QUICK_ACTIONS.map((action, i) => (
               <TouchableOpacity
@@ -245,6 +267,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.soft,
+  },
+  langToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  langText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
   heroGreeting: {
     fontSize: 14,
@@ -358,6 +394,8 @@ const styles = StyleSheet.create({
   patientInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   avatarPlaceholder: {
     width: 44,

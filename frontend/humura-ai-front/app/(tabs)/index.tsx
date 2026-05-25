@@ -41,12 +41,12 @@ export default function HomeScreen() {
     isGrey?: boolean;
     bgImage?: string;
   }> = [
-    { 
-      tab: '/(tabs)/profile', 
-      icon: 'chatbubbles', 
-      title: t('talk_specialist'), 
-      desc: 'Talk to a nurse.', 
-      colors: [Colors.primary, Colors.secondary] as [string, string], 
+    {
+      tab: '/messages',
+      icon: 'chatbubbles',
+      title: t('talk_specialist'),
+      desc: 'Talk to a nurse.',
+      colors: [Colors.primary, Colors.secondary] as [string, string],
       badge: 'Private',
     },
     { 
@@ -108,7 +108,7 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.langText}>{language === 'en' ? 'KN' : 'EN'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/(tabs)/profile')}>
+                <TouchableOpacity style={styles.profileBtn} onPress={() => router.push('/messages' as any)}>
                   <Ionicons name="mail" size={17} color={Colors.primary} />
                   <View style={styles.redDot} />
                 </TouchableOpacity>
@@ -121,7 +121,7 @@ export default function HomeScreen() {
             <Text style={styles.heroGreeting}>{getGreeting()} 🌿</Text>
             <Text style={styles.heroTitle}>{t('how_feeling')}</Text>
 
-            <TouchableOpacity style={styles.heroBtn} onPress={() => router.push('/(tabs)/profile')}>
+            <TouchableOpacity style={styles.heroBtn} onPress={() => router.push('/messages' as any)}>
               <Ionicons name="chatbubbles" size={17} color={Colors.primary} />
               <Text style={styles.heroBtnText}>{t('talk_specialist')}</Text>
             </TouchableOpacity>
@@ -129,7 +129,7 @@ export default function HomeScreen() {
         </ImageBackground>
 
         {/* Crisis strip */}
-        <TouchableOpacity style={styles.crisisBar} onPress={() => router.push('/(tabs)/profile')}>
+        <TouchableOpacity style={styles.crisisBar} onPress={() => router.push('/messages' as any)}>
           <Ionicons name="alert-circle" size={16} color="#fff" />
           <Text style={styles.crisisText}>{t('overwhelmed')}</Text>
           <Ionicons name="chevron-forward" size={14} color="#fff" />

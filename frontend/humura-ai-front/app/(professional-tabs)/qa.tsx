@@ -6,10 +6,12 @@ import {
 import { Colors, Spacing, Border, Shadows } from '../../src/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfessional } from '../../src/contexts/ProfessionalContext';
+import { useLanguage } from '../../src/contexts/LanguageContext';
 
 
 export default function ProfessionalQA() {
   const { questions, answerQuestion, profile } = useProfessional();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'unanswered' | 'answered'>('unanswered');
   const [replyDrafts, setReplyDrafts] = useState<{ [key: string]: string }>({});
 
@@ -49,39 +51,47 @@ export default function ProfessionalQA() {
       
       {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoIcon}>
-            <Ionicons name="help-circle" size={18} color="#fff" />
+        <View style={styles.headerTop}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoIcon}>
+              <Ionicons name="help-circle" size={18} color="#fff" />
+            </View>
+            <Text style={styles.headerTitle}>{t('pro_anonymous_qa')}</Text>
           </View>
-          <Text style={styles.headerTitle}>Anonymous Q&A</Text>
         </View>
         <View style={styles.titleUnderline} />
+        <View style={styles.filterBanner}>
+          <Ionicons name="filter" size={12} color="#856404" />
+          <Text style={styles.filterBannerText}>
+            Showing mental health questions only — anxiety, depression, trauma, stress & SRH
+          </Text>
+        </View>
       </View>
 
       {/* TABS */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tabButton, activeTab === 'unanswered' && styles.tabButtonActive]}
           onPress={() => setActiveTab('unanswered')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === 'unanswered' && styles.tabTextActive]}>Inquiries</Text>
+          <Text style={[styles.tabText, activeTab === 'unanswered' && styles.tabTextActive]}>{t('pro_inquiries')}</Text>
           {pendingCount > 0 && (
-            <View style={[styles.tabBadge, { backgroundColor: '#FEF3E6' }]}>
-              <Text style={[styles.tabBadgeText, { color: '#F39C12' }]}>{pendingCount}</Text>
+            <View style={[styles.tabBadge, { backgroundColor: '#E8F4FD' }]}>
+              <Text style={[styles.tabBadgeText, { color: Colors.primary }]}>{pendingCount}</Text>
             </View>
           )}
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.tabButton, activeTab === 'answered' && styles.tabButtonActive]}
           onPress={() => setActiveTab('answered')}
           activeOpacity={0.7}
         >
-          <Text style={[styles.tabText, activeTab === 'answered' && styles.tabTextActive]}>Answered Forum</Text>
+          <Text style={[styles.tabText, activeTab === 'answered' && styles.tabTextActive]}>{t('pro_answered_forum')}</Text>
           {answeredList.length > 0 && (
-            <View style={[styles.tabBadge, { backgroundColor: '#EAF7EE' }]}>
-              <Text style={[styles.tabBadgeText, { color: Colors.positive }]}>{answeredList.length}</Text>
+            <View style={[styles.tabBadge, { backgroundColor: '#E8F4FD' }]}>
+              <Text style={[styles.tabBadgeText, { color: Colors.primary }]}>{answeredList.length}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -102,10 +112,10 @@ export default function ProfessionalQA() {
                 <Text style={styles.questionText}>{q.text}</Text>
                 
                 <View style={styles.replySection}>
-                  <Text style={styles.replyTitle}>Your Therapeutic Guidance</Text>
+                  <Text style={styles.replyTitle}>{t('pro_your_guidance')}</Text>
                   <TextInput
                     style={styles.replyInput}
-                    placeholder="Write a compassionate, CBT-focused response..."
+                    placeholder={t('pro_reply_placeholder')}
                     placeholderTextColor={Colors.tabInactive}
                     multiline
                     numberOfLines={4}
@@ -116,15 +126,15 @@ export default function ProfessionalQA() {
                   <View style={styles.replyActionRow}>
                     <View style={styles.helperRow}>
                       <Ionicons name="shield-checkmark" size={14} color={Colors.primary} />
-                      <Text style={styles.helperText}>Anonymous professional answer.</Text>
+                      <Text style={styles.helperText}>{t('pro_anonymous_answer')}</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.sendButton}
                       onPress={() => handlePublishAnswer(q.id)}
                       activeOpacity={0.8}
                     >
                       <Ionicons name="checkmark-circle" size={16} color={Colors.white} />
-                      <Text style={styles.sendButtonText}>Publish</Text>
+                      <Text style={styles.sendButtonText}>{t('pro_publish')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -135,8 +145,8 @@ export default function ProfessionalQA() {
               <View style={[styles.emptyCircle, { backgroundColor: '#EAF7EE' }]}>
                 <Ionicons name="checkmark-done-circle" size={32} color={Colors.positive} />
               </View>
-              <Text style={styles.emptyText}>All questions answered!</Text>
-              <Text style={styles.emptySub}>No anonymous student inquiries are currently awaiting responses. Thank you for your diligence!</Text>
+              <Text style={styles.emptyText}>{t('pro_all_answered')}</Text>
+              <Text style={styles.emptySub}>{t('pro_no_inquiries')}</Text>
             </View>
           )
         ) : (
@@ -160,12 +170,12 @@ export default function ProfessionalQA() {
                       <Ionicons name="leaf" size={12} color="#fff" />
                     </View>
                     <View>
-                      <Text style={styles.docName}>Answer by {profile.name}</Text>
+                      <Text style={styles.docName}>{t('pro_answer_by')} {profile.name}</Text>
                       <Text style={styles.docSpecialization}>{profile.specialization}</Text>
                     </View>
                     <View style={styles.verifiedBadge}>
                       <Ionicons name="checkmark" size={10} color="#fff" />
-                      <Text style={styles.verifiedText}>Verified</Text>
+                      <Text style={styles.verifiedText}>{t('pro_verified')}</Text>
                     </View>
                   </View>
                   <Text style={styles.answerContentText}>{q.answerText}</Text>
@@ -177,8 +187,8 @@ export default function ProfessionalQA() {
               <View style={styles.emptyCircle}>
                 <Ionicons name="help-circle-outline" size={32} color={Colors.tabInactive} />
               </View>
-              <Text style={styles.emptyText}>No answered forum entries</Text>
-              <Text style={styles.emptySub}>Guidance you publish will appear here in the public forum archives.</Text>
+              <Text style={styles.emptyText}>{t('pro_no_forum')}</Text>
+              <Text style={styles.emptySub}>{t('pro_no_forum_sub')}</Text>
             </View>
           )
         )}
@@ -204,11 +214,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  langToggle: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#E8F4FD',
+    borderWidth: 1,
+    borderColor: '#D2E6F9',
+  },
+  langText: {
+    color: Colors.primary,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
   logoIcon: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#F39C12',
+    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -220,7 +249,7 @@ const styles = StyleSheet.create({
   titleUnderline: {
     width: 32,
     height: 4,
-    backgroundColor: '#F39C12',
+    backgroundColor: Colors.primary,
     borderRadius: 2,
     marginTop: 8,
   },
@@ -241,7 +270,7 @@ const styles = StyleSheet.create({
   },
   tabButtonActive: {
     borderBottomWidth: 3,
-    borderBottomColor: '#F39C12',
+    borderBottomColor: Colors.primary,
   },
   tabText: {
     fontSize: 14,
@@ -249,7 +278,7 @@ const styles = StyleSheet.create({
     color: Colors.tabInactive,
   },
   tabTextActive: {
-    color: '#F39C12',
+    color: Colors.primary,
     fontWeight: '800',
   },
   tabBadge: {
@@ -441,5 +470,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     fontWeight: '500',
+  },
+  filterBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#FFE082',
+  },
+  filterBannerText: {
+    fontSize: 11,
+    color: '#856404',
+    fontWeight: '600',
+    flex: 1,
   },
 });
